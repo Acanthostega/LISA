@@ -7,6 +7,7 @@ import OGLWidget as og
 import Figure as f
 
 from PyQt5 import Qt
+from PyQt5 import QtGui as qg
 from OpenGL import GL
 
 
@@ -28,14 +29,36 @@ class TestOGL(object):
             ]
         ).T
 
+        # buffer objects
+        self._m_vertices = qg.QOpenGLBuffer(qg.QOpenGLBuffer.VertexBuffer)
+        self._m_colors = qg.QOpenGLBuffer(qg.QOpenGLBuffer.VertexBuffer)
+
+        # bind buffer objects
+        self._m_vertices.create()
+        self._m_colors.create()
+        self._m_vertices.bind()
+        self._m_colors.bind()
+
+        # allocate
+        self._m_vertices.allocate(self._pos.data, len(self._pos))
+        self._m_colors.allocate(self._color.data, len(self._color))
+
+        # let buffer
+        self._m_vertices.release()
+        self._m_colors.release()
+
     def show(self, shaders, matrice):
         shaders.setUniformValue("modelview", matrice)
 
+        self._m_vertices.bind()
         shaders.setAttributeArray("in_Vertex", self._pos)
-        shaders.setAttributeArray("in_Color", self._color)
-
         shaders.enableAttributeArray("in_Vertex")
+        self._m_vertices.release()
+
+        self._m_colors.bind()
+        shaders.setAttributeArray("in_Color", self._color)
         shaders.enableAttributeArray("in_Color")
+        self._m_colors.release()
 
         GL.glDrawArrays(GL.GL_POINTS, 0, self._pos.shape[0])
 

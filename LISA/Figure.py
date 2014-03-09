@@ -16,8 +16,11 @@ class Figure(Qt.QGraphicsView):
 
         # Creation of the Plotting class:
         # Then we add it as background of the View:
-        context = qo.QGLWidget(Qt.QGLFormat(Qt.QGL.NoAccumBuffer))
+        context = qo.QGLWidget(
+            Qt.QGLFormat(Qt.QGL.DoubleBuffer)
+        )
         self.setViewport(context)
+        self.setViewportUpdateMode(Qt.QGraphicsView.FullViewportUpdate)
 
         # create the context for Opengl
         context.makeCurrent()
@@ -36,7 +39,7 @@ class Figure(Qt.QGraphicsView):
         )
 
         # unset the context ???
-        context.doneCurrent()
+        #context.doneCurrent()
 
     def addWidget(self, wid):
         tmp = self.scene().addWidget(wid, qc.Qt.Window)

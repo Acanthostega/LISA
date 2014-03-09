@@ -94,8 +94,14 @@ class OGLWidget(Qt.QGraphicsScene):
 
         matrice = self._projection * self._view * self._model
 
+        GL.glEnable(GL.GL_DEPTH_TEST)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+
         for data in self._data:
             data.show(self._shaders, matrice)
+
+        GL.glDisable(GL.GL_DEPTH_TEST)
+        GL.glGetError()
 
         self._shaders.release()
 
