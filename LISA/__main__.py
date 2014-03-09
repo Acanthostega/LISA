@@ -15,10 +15,12 @@ from OpenGL import GL
 class TestOGL(object):
 
     def __init__(self, *args, **kwargs):
-        rand = np.random.rand(1000, 3)
-        self._color = np.random.rand(1000, 3).flatten()
 
-        r = rand[:, 0] ** (1. / 3.)
+        rand = np.random.rand(10000, 3)
+
+        self._color = np.asarray(np.random.rand(10000, 3), dtype=np.float32)
+
+        r = 1 * rand[:, 0] ** (1. / 3.)
         thet = np.arccos(2 * rand[:, 1] - 1)
         phi = 2. * np.pi * rand[:, 2]
 
@@ -26,52 +28,43 @@ class TestOGL(object):
             [
                 r * np.cos(phi) * np.sin(thet),
                 r * np.sin(phi) * np.sin(thet),
-                r * np.cos(thet)
+                r * np.cos(thet),
+                self._color[:, 0],
+                self._color[:, 1],
+                self._color[:, 2],
             ],
-            dtype=np.float64,
+            dtype=np.float32,
         ).T.flatten()
 
         # buffer objects
         self._m_vertices = qg.QOpenGLBuffer(qg.QOpenGLBuffer.VertexBuffer)
-        self._m_colors = qg.QOpenGLBuffer(qg.QOpenGLBuffer.VertexBuffer)
 
         # bind buffer objects
         self._m_vertices.create()
-        self._m_colors.create()
         self._m_vertices.bind()
-        self._m_colors.bind()
 
         # allocate
         self._m_vertices.allocate(
             sip.voidptr(self._pos.ctypes.data),
-            len(self._pos) * 8
-        )
-        self._m_colors.allocate(
-            sip.voidptr(self._color.ctypes.data),
-            len(self._color) * 8
+            len(self._pos) * 4
         )
 
         # let buffer
         self._m_vertices.release()
-        self._m_colors.release()
 
     def show(self, shaders, matrice):
 
         shaders.setUniformValue("modelview", matrice)
 
         self._m_vertices.bind()
-        self._m_colors.bind()
-
-        shaders.setAttributeBuffer("in_Vertex", GL.GL_DOUBLE, 0, 3)
         shaders.enableAttributeArray("in_Vertex")
+        shaders.setAttributeBuffer("in_Vertex", GL.GL_FLOAT, 0, 3, 24)
 
-        shaders.setAttributeBuffer("in_Color", GL.GL_DOUBLE, 0, 3)
         shaders.enableAttributeArray("in_Color")
-
+        shaders.setAttributeBuffer("in_Color", GL.GL_FLOAT, 12, 3, 24)
         self._m_vertices.release()
-        self._m_colors.release()
 
-        GL.glDrawArrays(GL.GL_POINTS, 0, len(self._pos) // 3)
+        GL.glDrawArrays(GL.GL_POINTS, 0, len(self._pos) // 6)
 
         shaders.disableAttributeArray("in_Vertex")
         shaders.disableAttributeArray("in_Color")
