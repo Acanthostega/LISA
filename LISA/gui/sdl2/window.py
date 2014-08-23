@@ -11,6 +11,9 @@ from .events import _SDLInput_logger
 __all__ = ["SDLWindow"]
 
 
+_context = None
+
+
 class SDLWindow(object):
     def __init__(
         self,
@@ -19,6 +22,7 @@ class SDLWindow(object):
         size=(800, 480),
         flags=s.SDL_WINDOW_SHOWN | s.SDL_WINDOW_OPENGL | s.SDL_WINDOW_RESIZABLE
     ):
+        global _context
         self._win = s.SDL_CreateWindow(
             title.encode(),
             w_pos[0], w_pos[1],
@@ -27,7 +31,12 @@ class SDLWindow(object):
         )
 
         self._id = s.SDL_GetWindowID(self._win)
-        self._context = s.SDL_GL_CreateContext(self._win)
+        if _context is None:
+            self._context = s.SDL_GL_CreateContext(self._win)
+            _context = self._context
+        else:
+            s.SDL_GL_SetAttribute(s.SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1)
+            self._context = s.SDL_GL_CreateContext(self._win)
 
         self._x = 0.
         self._y = 30.0
@@ -56,6 +65,7 @@ class SDLWindow(object):
 
     def makeCurrent(self):
         s.SDL_GL_MakeCurrent(self._win, self._context)
+        GL.glViewport(0, 0, *self._screensize)
 
     def draw(self):
         _SDLInput_logger.debug("Inside window %d for drawing.", id(self._win))

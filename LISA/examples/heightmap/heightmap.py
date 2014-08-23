@@ -56,9 +56,6 @@ class HeightMap(object):
             )
         )
 
-        GL.glEnable(GL.GL_TEXTURE_2D)
-        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
-
         self._texture = t.Texture()
         self._texture.bind()
         self._texture.setParameter(
@@ -108,6 +105,9 @@ class HeightMap(object):
             "modelview",
             mat,
         )
+
+        GL.glEnable(GL.GL_TEXTURE_2D)
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
 
         # to use the vertex buffer
         self._vertices.bind()
