@@ -454,8 +454,7 @@ class Widget(object):
     def _inside_border(self, x, y):
         return (
             self._corner[0] + self._size[0] - self._borders[0] <=
-            x <= self._corner[0] + self._size[0]
-            and
+            x <= self._corner[0] + self._size[0] and
             self._corner[1] + self._size[1] - self._borders[1] <=
             y <= self._corner[1] + self._size[1]
         )

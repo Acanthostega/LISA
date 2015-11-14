@@ -3,7 +3,7 @@
 
 from .fonts import Text
 from .layout import HorizontalLayout
-from ..utils.signals import Signal
+from LISA.tools.signals import Signal
 
 
 class Button(HorizontalLayout):

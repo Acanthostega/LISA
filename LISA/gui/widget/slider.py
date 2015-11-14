@@ -3,7 +3,7 @@
 
 from .layout import VerticalLayout, HorizontalLayout
 from .widget import Widget
-from LISA.gui.utils.signals import Signal
+from LISA.tools.signals import Signal
 
 
 __all__ = ["VerticalSlider", "HorizontalSlider"]

@@ -9,10 +9,11 @@ import LISA.tools as t
 import LISA.Object as o
 import LISA.Matrice as m
 
-from LISA.OpenGL import VAO, VBO, INDEX_BUFFER, VERTEX_BUFFER, Texture
+from LISA.OpenGL import VAO, VBO, INDEX_BUFFER, VERTEX_BUFFER, Texture, FBO
 from LISA.gui.widget import Application
 from LISA.gui.widget import HorizontalSlider
 from LISA.gui.widget import Text
+from LISA.gui.widget.image import Image
 from LISA.Matrice import Vector
 
 
@@ -69,19 +70,21 @@ class Earth(o.Base):
         self._shaders += t.shader_path("earth_lighting/earth_lighting.fsh")
 
     def createShaders(self, world):
-
         # create buffers
         self._vertices = VBO(VERTEX_BUFFER)
         self._index = VBO(INDEX_BUFFER)
         self._nvertices = VBO(VERTEX_BUFFER)
         self._nindex = VBO(INDEX_BUFFER)
         self._vao = VAO()
+        self._fbo = FBO(1600, 1600)
 
         self._vertices.create()
         self._index.create()
         self._nvertices.create()
         self._nindex.create()
         self._vao.create()
+        self._fbo.create()
+        self.image.fbo = self._fbo
 
         # allocate buffers
         self._vertices.bind()
@@ -186,6 +189,16 @@ class Earth(o.Base):
         self.distance_slider = HorizontalSlider()
         self._widget.addWidget(self.distance_slider)
 
+        # image
+        self.image_text = Text()
+        self.image_text.text = "Image"
+        self._widget.addWidget(self.image_text)
+        #  self.image = Image(t.texture_path("heightmap/two.png"))
+        self.image = Image()
+        self.image.minWidth = 100
+        self.image.minHeight = 100
+        self._widget.addWidget(self.image)
+
         # connect the slider to the rotation of the earth
         self.rotation_slider.changedSlider.connect(self._updateModel)
         self.attenuation_slider.changedSlider.connect(self._updateAttenuation)
@@ -216,6 +229,13 @@ class Earth(o.Base):
         self.light_position[1] = 1.01 + 99 * value
 
     def paintEvent(self, event):
+        self._fbo.bind()
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        self._render(event)
+        self._fbo.release()
+        self._render(event)
+
+    def _render(self, event):
 
         # rotate against z axis
         self.model *= m.Quaternion(self.angle, m.Vector(0., 0., 1.))

@@ -8,7 +8,6 @@ __all__ = ["VerticalLayout", "HorizontalLayout"]
 
 
 class BaseLayout(Widget):
-
     def __init__(self, *args, **kwargs):
 
         super(BaseLayout, self).__init__(*args, **kwargs)
@@ -135,7 +134,6 @@ class BaseLayout(Widget):
 
 
 class VerticalLayout(BaseLayout):
-
     def _widget_position(self, widget):
         return self.y + self.padding_top + self._total + widget.margin_top
 

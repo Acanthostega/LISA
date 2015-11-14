@@ -6,7 +6,8 @@ import logging
 import LISA.Matrice as m
 
 from OpenGL import GL
-from ..utils.signals import Signal
+from LISA.tools.metaclasses import SingletonManager
+from LISA.tools.manager import Manager
 
 
 __all__ = ["SDLWindow"]
@@ -14,29 +15,28 @@ __all__ = ["SDLWindow"]
 logger = logging.getLogger(__name__)
 
 
-class WindowManager(object):
+class WindowManager(Manager):
     """
     A window manager allowing to store and retrieve created windows.
     """
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """
         Init some containers for created windows, and signals.
         """
+        super(WindowManager, self).__init__(*args, **kwargs)
         # containers
         self.windowsById = {}
+        self.windowsByName = {}
         self.windows = []
 
-        # signals
-        self.created = Signal()
-        self.deleted = Signal()
-
-    def add(self, window):
+    def create(self, window):
         """
         Add a window.
         """
         # register the window if properties present
         if hasattr(window, "id"):
             self.windowsById[window.id] = window
+            self.windowsByName[window.name] = window
         else:
             logger.error(
                 "The window {0} must have an id to be "
@@ -60,38 +60,7 @@ class WindowManager(object):
         self.deleted(window)
 
 
-class WindowMetaclass(type):
-    """
-    Metaclass to register created windows and easily get access to them in the
-    program according to various properties.
-    """
-
-    def __init__(cls, *args, **kwargs):
-        """
-        Store containers to the class.
-        """
-        # create the class as usual
-        super(WindowMetaclass, cls).__init__(*args, **kwargs)
-
-        # create the container if not present
-        if not hasattr(cls, "manager"):
-            cls.manager = WindowManager()
-
-    def __call__(cls, *args, **kwargs):
-        """
-        Register windows when they are created.
-        """
-        # create the instance has usual
-        instance = super(WindowMetaclass, cls).__call__(*args, **kwargs)
-
-        # register the window if properties present
-        cls.manager.add(instance)
-
-        # return the instance
-        return instance
-
-
-class SDLWindow(object, metaclass=WindowMetaclass):
+class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
     def __init__(
         self,
         title,

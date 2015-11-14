@@ -5,7 +5,7 @@
 from .layout import HorizontalLayout, VerticalLayout
 from .fonts import Text
 from .button import Button
-from LISA.gui.utils.signals import Signal
+from LISA.tools.signals import Signal
 
 
 __all__ = ["Spinner"]

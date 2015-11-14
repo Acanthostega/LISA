@@ -8,70 +8,12 @@ from scipy.misc import imread
 
 from LISA.Matrice import Vector
 from LISA.tools import DTYPE_TO_GL
+from LISA.tools.metaclasses import SingletonManager
 
 __all__ = ["Texture"]
 
 
-class TextureManager(object):
-    """
-    A manager of the created textures.
-    """
-    def __init__(self):
-        """
-        Init the containers of the texture.
-        """
-        # texture by name
-        self.instancesByName = {}
-
-        # list of instances of textures
-        self.instances = []
-
-    def create(self, instance):
-        """
-        When an instance is created, this method is called.
-        """
-        # add the instance by the name
-        self.instancesByName[instance.name] = instance
-
-        # add the instance to the list
-        self.instances.append(instance)
-
-    def delete(self, instance):
-        """
-        When a texture must be deleted, this method is called to unregister it.
-        """
-        # delete from the dictionary and the list
-        self.instancesByName.pop(instance.name, None)
-        self.instances.remove(instance)
-
-
-class TextureMetaclass(type):
-    """
-    A metaclass to be able to manage the texture in the program.
-    """
-    def __init__(cls, name, bases, attrs):
-        """
-        To set the manager of the texture.
-        """
-        # if the manager is not created, set it to the class
-        if not hasattr(cls, "manager"):
-            cls.manager = TextureManager()
-
-    def __call__(cls, name, *args, **kwargs):
-        """
-        Register instantiated textures.
-        """
-        # check if the instance is already created
-        if name in cls.manager.instancesByName:
-            return cls.manager.instancesByName[name]
-
-        # not already created, we instantiate and register it
-        instance = super(TextureMetaclass, cls).__call__(name, *args, **kwargs)
-        cls.manager.create(instance)
-        return instance
-
-
-class Texture(object, metaclass=TextureMetaclass):
+class Texture(metaclass=SingletonManager):
     """
     A class representation of a texture.
     """
@@ -83,6 +25,7 @@ class Texture(object, metaclass=TextureMetaclass):
             setattr(self, k, v)
 
         self._binded = False
+        self._loaded = False
         self.deep = None
         self.level = 0
         self.unit = 0
@@ -159,6 +102,9 @@ class Texture(object, metaclass=TextureMetaclass):
         Load the texture into memory with the parameters specified in the
         properties of the texture instance.
         """
+        if self._loaded:
+            return
+
         # bind the texture to the opengl context
         self.bind()
 
@@ -177,6 +123,8 @@ class Texture(object, metaclass=TextureMetaclass):
 
         # say opengl where is the data for the texture
         self._teximage(*[x for x in values])
+
+        self._loaded = True
 
     def activate(self):
         GL.glActiveTexture(GL.GL_TEXTURE0 + self.unit)

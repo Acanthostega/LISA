@@ -1,18 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-""" A signal/slot implementation
-
-File:    signal.py
-Author:  Thiago Marcos P. Santos
-Author:  Christopher S. Case
-Author:  David H. Bronke
-Created: August 28, 2008
-Updated: December 12, 2011
-License: MIT
-
-"""
-
 import inspect
 from weakref import WeakSet, WeakKeyDictionary
 
@@ -65,14 +53,22 @@ class Signal(object):
         """
         Activate the signal to emit.
         """
-
         self._activated = True
 
     def deactivate(self):
         """
         Deactivate the signal to emit.
         """
-
         self._activated = False
+
+    def show(self):
+        """
+        Show all connected slots to the signal.
+        """
+        return "Methods: {0}\nFunctions: {1}".format(
+            dict(self._methods),
+            set(self._functions),
+        )
+
 
 # vim: set tw=79 :

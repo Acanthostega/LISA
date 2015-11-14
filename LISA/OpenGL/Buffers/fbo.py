@@ -43,7 +43,13 @@ class RenderBuffer(Buffer):
 class FBO(Buffer):
     """The Frame Buffer object class.
     """
-    def __init__(self, width=480, height=192, textureFormat="RGBA", useStencil=False):
+    def __init__(
+        self,
+        width=480,
+        height=192,
+        textureFormat="RGBA",
+        useStencil=False,
+    ):
         self._id = 0
 
         self._width = width
@@ -63,7 +69,8 @@ class FBO(Buffer):
         self._renderBuffer = RenderBuffer()
 
     def create(self, nbColorBuffer=1):
-        """ Create the frame buffer object, including all the needed color buffer and depth buffer.
+        """ Create the frame buffer object, including all the needed color
+        buffer and depth buffer.
 
         :param nbColorBuffer: Number of color buffer to create.
         :type nbColorBuffer: int
@@ -104,10 +111,15 @@ class FBO(Buffer):
                 self._renderBuffer.id
             )
 
-        if GL.glCheckFramebufferStatus(GL.GL_FRAMEBUFFER) != GL.GL_FRAMEBUFFER_COMPLETE:
+        if (
+            GL.glCheckFramebufferStatus(GL.GL_FRAMEBUFFER) !=
+            GL.GL_FRAMEBUFFER_COMPLETE
+        ):
             self.delete()
 
-            raise RuntimeError("Problem with framebuffer instance '%s': creation failed.")
+            raise RuntimeError(
+                "Problem with framebuffer instance '%s': creation failed."
+            )
 
         self.release()
 
@@ -133,10 +145,17 @@ class FBO(Buffer):
 
     def loadColorBuffers(self, nb=1):
         if nb > 16:
-            raise ValueError("A frame buffer can only have 16 color buffer attach to it.")
+            raise ValueError(
+                "A frame buffer can only have 16 color buffer attach to it."
+            )
 
         for i in range(nb):
-            texture = Texture("_fbo_to randomized" + str(nb), width=self._width, height=self._height, format=self._format)
+            texture = Texture(
+                "_fbo_to randomized" + str(nb),
+                width=self._width,
+                height=self._height,
+                format=self._format,
+            )
             texture.kind = "2D"
             texture.data = None
             texture.type = GL.GL_UNSIGNED_BYTE
@@ -161,11 +180,21 @@ class FBO(Buffer):
     def width(self):
         return self._width
 
+    @width.setter
+    def width(self, width):
+        self._width = width
+
     @property
     def height(self):
         return self._height
+
+    @height.setter
+    def height(self, height):
+        self._height = height
 
     @property
     def colorBuffers(self):
         return self._colorBuffers
 
+
+# vim: set tw=79 :
