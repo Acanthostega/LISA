@@ -29,6 +29,9 @@ class Texture(metaclass=SingletonManager):
         self.deep = None
         self.level = 0
         self.unit = 0
+        self.id = 0
+
+    def create(self):
         self.id = GL.glGenTextures(1)
 
     def bind(self):
@@ -125,6 +128,8 @@ class Texture(metaclass=SingletonManager):
         self._teximage(*[x for x in values])
 
         self._loaded = True
+
+        self.release()
 
     def activate(self):
         GL.glActiveTexture(GL.GL_TEXTURE0 + self.unit)

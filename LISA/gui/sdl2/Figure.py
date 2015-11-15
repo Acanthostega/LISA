@@ -1,7 +1,7 @@
 # -*- coding:Utf8 -*-
 
 from OpenGL.arrays import numpymodule
-from .OGLWidget import OGLWidget
+from .canvas import Canvas
 
 
 numpymodule.NumpyHandler.ERROR_ON_COPY = True
@@ -11,11 +11,14 @@ __all__ = ["Figure"]
 
 class Figure(object):
     def __init__(self, name="Figure {id:d}"):
-
         # set the window which will be the scene
-        self.scene = OGLWidget("")
-        self.scene.name = name.format(id=self.scene.id)
+        self.canvas = Canvas("")
+        self.canvas.name = name.format(id=self.canvas.id)
 
+    def add_axes(self, nx, ny, position):
+        """
+        Add an axes into the figure, on which to draw objects.
+        """
     @property
     def background_color(self):
         return self._background_color
@@ -25,8 +28,8 @@ class Figure(object):
         self._background_color = background_color
 
     def addWidget(self, wid):
-        wid.parent = self.scene
-        self.scene.addWidget(wid)
+        wid.parent = self.canvas
+        self.canvas.addWidget(wid)
 
     def __getitem__(self, ind):
         return self.scene.lines[ind]
@@ -41,10 +44,7 @@ class Figure(object):
     @axes.setter
     def axes(self, value):
         # create shaders if there is one
-        self.scene.makeCurrent()
-
-        # set the world into the axes
-        value.world = self.scene
+        self.canvas.makeCurrent()
 
         # add widget created by user
         if hasattr(value, "createWidget"):
@@ -52,13 +52,13 @@ class Figure(object):
             if wid:
                 self.addWidget(wid)
             # create shaders for widget
-            wid.createShaders(self.scene)
+            wid.createShaders(self.canvas)
 
         # create shaders after all is done
-        value.createShaders(self.scene)
+        value.createShaders(self.canvas)
 
         # store the instance for plots
-        self.scene.lines = value
+        self.canvas.axes.append(value)
 
     def close(self):
         self.scene.close()

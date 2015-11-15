@@ -5,7 +5,6 @@ in vec3 modelPosition;
 
 uniform sampler2D image;
 uniform mat4 model;
-uniform mat4 rotate;
 uniform vec3 camera;
 uniform float materialShininess;
 uniform vec3 materialSpecularColor;
@@ -65,11 +64,9 @@ void main()
 
     vec3 surfaceToLight = vec3(light.position) - worldPosition;
 
-    vec3 camera_rotated = transpose(mat3(rotate)) * camera;
-
     // not working I don't know why
     vec3 fragNormal = normalize(cross(dFdx(worldPosition), dFdy(worldPosition)));
     /* vec3 fragNormal = vec3(0, 0, 1); */
 
-    finalColor = vec4(ApplyLight(light, surfaceColor.rgb, fragNormal, worldPosition, normalize(camera_rotated-worldPosition)), 1);
+    finalColor = vec4(ApplyLight(light, surfaceColor.rgb, fragNormal, worldPosition, normalize(camera-worldPosition)), 1);
 }

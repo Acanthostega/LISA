@@ -3,12 +3,10 @@
 
 import numpy as np
 
-
 __all__ = ["Vector"]
 
 
 class Vector(np.ndarray):
-
     """Vector dealing class"""
     def __new__(cls, *args, dtype=np.float32, **kwargs):
         buf = np.array(args, dtype=dtype)
@@ -33,8 +31,10 @@ class Vector(np.ndarray):
 
         if self.dtype == np.float32:
             self._dim_str += "f"
-        elif self.dtype == np.float32:
+        elif self.dtype == np.float64:
             self._dim_str += "d"
+        elif self.dtype == np.bool:
+            self._dim_str += "ui"
         self._dim_str = "glUniform" + self._dim_str + "v"
 
     def _setUniformValue(self, id, GL_ns):
@@ -75,3 +75,6 @@ class Vector(np.ndarray):
 
     def normalized(self):
         return Vector(*self.tolist()) / self.norm()
+
+
+# vim: set tw=79 :

@@ -70,8 +70,6 @@ void main()
 
     vec3 surfaceToLight = vec3(light.position) - fragPosition;
 
-    vec3 camera_rotated = transpose(mat3(rotate)) * camera;
-
-    finalColor = vec4(ApplyLight(light, surfaceColor.rgb, fragNormal, fragPosition, normalize(camera_rotated-fragPosition)), 1);
+    finalColor = vec4(ApplyLight(light, surfaceColor.rgb, fragNormal, fragPosition, normalize(camera-fragPosition)), 1);
 }
 

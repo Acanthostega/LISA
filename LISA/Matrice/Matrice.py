@@ -19,9 +19,7 @@ D2R = np.pi / 180.
 
 
 class Matrix(np.ndarray):
-
     """An upper class over numpy.ndarray to deal with our module matrices."""
-
     def __init__(self, *args, **kwargs):
         if len(self.shape) == 2:
             if self.shape[0] != self.shape[1]:
@@ -191,3 +189,6 @@ def Quaternion(angle, axe, dtype=None):
     mat[3, 3] = 1.0
 
     return mat
+
+
+# vim: set tw=79 :

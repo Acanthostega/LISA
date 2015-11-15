@@ -5,6 +5,7 @@ from OpenGL import GL
 
 from .Buffer import Buffer
 from ..Textures import Texture
+from LISA.tools.metaclasses import SingletonManager
 
 __all__ = [
     "FBO",
@@ -40,17 +41,20 @@ class RenderBuffer(Buffer):
         return self._id
 
 
-class FBO(Buffer):
-    """The Frame Buffer object class.
+class FBO(Buffer, metaclass=SingletonManager):
+    """
+    The Frame Buffer object class.
     """
     def __init__(
         self,
+        name,
         width=480,
         height=192,
         textureFormat="RGBA",
         useStencil=False,
     ):
         self._id = 0
+        self.name = name
 
         self._width = width
         self._height = height
@@ -159,6 +163,7 @@ class FBO(Buffer):
             texture.kind = "2D"
             texture.data = None
             texture.type = GL.GL_UNSIGNED_BYTE
+            texture.create()
             texture.parameters = {
                 "TEXTURE_MIN_FILTER": "LINEAR",
                 "TEXTURE_MAG_FILTER": "NEAREST",

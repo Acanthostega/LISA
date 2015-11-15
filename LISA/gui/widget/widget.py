@@ -326,9 +326,9 @@ class Widget(object):
         self._shaders += t.shader_path("widget/widget.fsh")
 
         # create buffers
-        self._vertices = VBO(VERTEX_BUFFER)
-        self._index = VBO(INDEX_BUFFER)
-        self._vao = VAO()
+        self._vertices = VBO("Widget square", VERTEX_BUFFER)
+        self._index = VBO("Widget square indexes", INDEX_BUFFER)
+        self._vao = VAO("Widget")
 
         self._vertices.create()
         self._index.create()
@@ -368,7 +368,6 @@ class Widget(object):
             widget.createShaders(world)
 
     def paintEvent(self, event):
-
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
         GL.glEnable(GL.GL_BLEND)
@@ -377,7 +376,7 @@ class Widget(object):
 
         self._shaders.setUniformValue(
             "modelview",
-            self.world._widget_projection * self._model
+            self.world.widget_camera.projection * self._model
         )
 
         self._shaders.setUniformValue(

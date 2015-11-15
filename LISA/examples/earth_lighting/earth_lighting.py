@@ -69,84 +69,77 @@ class Earth(o.Base):
         self._shaders += t.shader_path("earth_lighting/earth_lighting.vsh")
         self._shaders += t.shader_path("earth_lighting/earth_lighting.fsh")
 
-    def createShaders(self, world):
         # create buffers
-        self._vertices = VBO(VERTEX_BUFFER)
-        self._index = VBO(INDEX_BUFFER)
-        self._nvertices = VBO(VERTEX_BUFFER)
-        self._nindex = VBO(INDEX_BUFFER)
-        self._vao = VAO()
-        self._fbo = FBO(1600, 1600)
+        self._vertices = VBO("Earth points", VERTEX_BUFFER)
+        self._index = VBO("Earth points indexes", INDEX_BUFFER)
+        self._nvertices = VBO("Earth normals", VERTEX_BUFFER)
+        self._nindex = VBO("Earth normal indexes", INDEX_BUFFER)
+        self._vao = VAO("Earth")
+        self._fbo = FBO("Earth scene", 1600, 1600)
+        self._texture = Texture.fromImage(t.texture_path("earth/earth.jpg"))
 
+    def createShaders(self, world):
         self._vertices.create()
         self._index.create()
         self._nvertices.create()
         self._nindex.create()
         self._vao.create()
         self._fbo.create()
-        self.image.fbo = self._fbo
 
         # allocate buffers
-        self._vertices.bind()
-        self._vertices.allocate(
-            self._data,
-            len(self._data) * 4
-        )
-        self._vertices.release()
-        self._index.bind()
-        self._index.allocate(
-            self._plot_prop._ids,
-            len(self._plot_prop._ids) * 4
-        )
-        self._index.release()
-        self._nvertices.bind()
-        self._nvertices.allocate(
-            self._normals,
-            len(self._normals) * 4
-        )
-        self._nvertices.release()
-        self._nindex.bind()
-        self._nindex.allocate(
-            self._plot_prop._ids,
-            len(self._plot_prop._ids) * 4
-        )
-        self._nindex.release()
+        with self._vertices.activate():
+            self._vertices.allocate(
+                self._data,
+                len(self._data) * 4
+            )
+        with self._index.activate():
+            self._index.allocate(
+                self._plot_prop._ids,
+                len(self._plot_prop._ids) * 4
+            )
+        with self._nvertices.activate():
+            self._nvertices.allocate(
+                self._normals,
+                len(self._normals) * 4
+            )
+        with self._nindex.activate():
+            self._nindex.allocate(
+                self._plot_prop._ids,
+                len(self._plot_prop._ids) * 4
+            )
 
-        texture = Texture.fromImage(t.texture_path("earth/earth.jpg"))
-        texture.parameters = {
+        self._texture.create()
+        self._texture.parameters = {
             "TEXTURE_MIN_FILTER": "LINEAR",
             "TEXTURE_MAG_FILTER": "LINEAR",
             "TEXTURE_WRAP_S": "CLAMP_TO_EDGE",
             "TEXTURE_WRAP_T": "CLAMP_TO_EDGE",
         }
-        texture.format = "RGB"
-        texture.load()
-        self._shaders.textures << texture
+        self._texture.format = "RGB"
+        self._texture.load()
+        self._shaders.textures << self._texture
 
         self._shaders.build()
         self._shaders.bindAttribLocation("position")
         self._shaders.bindAttribLocation("normal")
         self._shaders.link()
 
-        self._vao.bind()
+        with self._vao.activate():
+            self._vertices.bind()
+            self._shaders.enableAttributeArray("position")
+            self._shaders.setAttributeBuffer(
+                "position",
+                self._data,
+            )
+            self._index.bind()
 
-        self._vertices.bind()
-        self._shaders.enableAttributeArray("position")
-        self._shaders.setAttributeBuffer(
-            "position",
-            self._data,
-        )
-        self._index.bind()
-
-        self._nvertices.bind()
-        self._shaders.enableAttributeArray("normal")
-        self._shaders.setAttributeBuffer(
-            "normal",
-            self._normals,
-        )
-        self._nindex.bind()
-
-        self._vao.release()
+            self._nvertices.bind()
+            self._shaders.enableAttributeArray("normal")
+            self._shaders.setAttributeBuffer(
+                "normal",
+                self._normals,
+            )
+            self._nindex.bind()
 
     def createWidget(self):
         self._widget = Application(layout="vertical")
@@ -193,11 +186,16 @@ class Earth(o.Base):
         self.image_text = Text()
         self.image_text.text = "Image"
         self._widget.addWidget(self.image_text)
-        #  self.image = Image(t.texture_path("heightmap/two.png"))
-        self.image = Image()
+
+        self.image = Image(t.texture_path("earth/earth2.png"))
         self.image.minWidth = 100
         self.image.minHeight = 100
-        self._widget.addWidget(self.image)
+        #  self._widget.addWidget(self.image)
+
+        self.image2 = Image(fbo=self._fbo)
+        self.image2.minWidth = 100
+        self.image2.minHeight = 100
+        self._widget.addWidget(self.image2)
 
         # connect the slider to the rotation of the earth
         self.rotation_slider.changedSlider.connect(self._updateModel)
@@ -229,17 +227,22 @@ class Earth(o.Base):
         self.light_position[1] = 1.01 + 99 * value
 
     def paintEvent(self, event):
-        self._fbo.bind()
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-        self._render(event)
-        self._fbo.release()
-        self._render(event)
-
-    def _render(self, event):
-
         # rotate against z axis
         self.model *= m.Quaternion(self.angle, m.Vector(0., 0., 1.))
 
+        # render in the fbo
+        with self._fbo.activate():
+
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+            screen = event.world.camera.screen
+            event.world.camera.screen = self._fbo.width, self._fbo.height
+            self._render(event)
+            event.world.camera.screen = screen
+
+        # render in the screen
+        self._render(event)
+
+    def _render(self, event):
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
         GL.glEnable(GL.GL_DEPTH_TEST)
@@ -250,11 +253,11 @@ class Earth(o.Base):
 
         self._shaders.setUniformValue(
             "projection",
-            event.world._projection,
+            event.world.camera.projection,
         )
         self._shaders.setUniformValue(
             "view",
-            event.world._view,
+            event.world.camera.view,
         )
         self._shaders.setUniformValue(
             "model",
@@ -262,11 +265,7 @@ class Earth(o.Base):
         )
         self._shaders.setUniformValue(
             "camera",
-            event.world._camera,
-        )
-        self._shaders.setUniformValue(
-            "rotate",
-            event.world._rotate,
+            event.world.camera.position,
         )
         self._shaders.setUniformValue(
             "light.position",
@@ -299,16 +298,14 @@ class Earth(o.Base):
         )
         self._shaders.textures.activate()
 
-        self._vao.bind()
-        GL.glCullFace(GL.GL_FRONT)
-        GL.glDrawElements(
-            GL.GL_TRIANGLES,
-            len(self._plot_prop._ids),
-            GL.GL_UNSIGNED_INT,
-            None,
-        )
-
-        self._vao.release()
+        with self._vao.activate():
+            GL.glCullFace(GL.GL_FRONT)
+            GL.glDrawElements(
+                GL.GL_TRIANGLES,
+                len(self._plot_prop._ids),
+                GL.GL_UNSIGNED_INT,
+                None,
+            )
 
         self._shaders.textures.release()
         self._shaders.release()

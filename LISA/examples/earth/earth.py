@@ -16,7 +16,6 @@ from LISA.gui.widget import HorizontalSlider
 
 
 class Earth(o.Base):
-
     def __init__(self, *args, **kwargs):
 
         npoints = 800
@@ -55,56 +54,52 @@ class Earth(o.Base):
         self._shaders += t.shader_path("earth/earth.vsh")
         self._shaders += t.shader_path("earth/earth.fsh")
 
-    def createShaders(self, world):
-
         # create buffers
-        self._vertices = VBO(VERTEX_BUFFER)
-        self._index = VBO(INDEX_BUFFER)
-        self._vao = VAO()
+        self._vertices = VBO("Earth vertices", VERTEX_BUFFER)
+        self._index = VBO("Earth indexes", INDEX_BUFFER)
+        self._vao = VAO("Earth")
+        self.texture = Texture.fromImage(t.texture_path("earth/earth2.png"))
 
+    def createShaders(self, world):
         self._vertices.create()
         self._index.create()
         self._vao.create()
 
         # allocate buffers
-        self._vertices.bind()
-        self._vertices.allocate(
-            self._data,
-            len(self._data) * 4
-        )
-        self._vertices.release()
-        self._index.bind()
-        self._index.allocate(
-            self._plot_prop._ids,
-            len(self._plot_prop._ids) * 4
-        )
-        self._index.release()
+        with self._vertices.activate():
+            self._vertices.allocate(
+                self._data,
+                len(self._data) * 4
+            )
 
-        texture = Texture.fromImage(t.texture_path("earth/earth2.png"))
-        texture.parameters = {
+        with self._index.activate():
+            self._index.allocate(
+                self._plot_prop._ids,
+                len(self._plot_prop._ids) * 4
+            )
+
+        self.texture.create()
+        self.texture.parameters = {
             "TEXTURE_MIN_FILTER": "LINEAR",
             "TEXTURE_MAG_FILTER": "LINEAR",
             "TEXTURE_WRAP_S": "CLAMP_TO_EDGE",
             "TEXTURE_WRAP_T": "CLAMP_TO_EDGE",
         }
-        texture.load()
-        self._shaders.textures << texture
+        self.texture.load()
+        self._shaders.textures << self.texture
 
         self._shaders.build()
         self._shaders.bindAttribLocation("position")
         self._shaders.link()
 
-        self._vao.bind()
-
-        self._vertices.bind()
-        self._shaders.enableAttributeArray("position")
-        self._shaders.setAttributeBuffer(
-            "position",
-            self._data,
-        )
-        self._index.bind()
-
-        self._vao.release()
+        with self._vao.activate():
+            self._vertices.bind()
+            self._shaders.enableAttributeArray("position")
+            self._shaders.setAttributeBuffer(
+                "position",
+                self._data,
+            )
+            self._index.bind()
 
     def createWidget(self):
         self._widget = Application(layout="vertical")
@@ -137,7 +132,6 @@ class Earth(o.Base):
         self.angle = (value - 0.5) * 3.14159
 
     def paintEvent(self, event):
-
         # rotate against z axis
         self.model *= m.Quaternion(self.angle, m.Vector(0., 0., 1.))
 
@@ -151,11 +145,11 @@ class Earth(o.Base):
 
         self._shaders.setUniformValue(
             "projection",
-            event.world._projection
+            event.world.camera.projection
         )
         self._shaders.setUniformValue(
             "modelview",
-            event.world._view * self._model
+            event.world.camera.view * self._model
         )
 
         self._shaders.setUniformValue(
@@ -164,23 +158,21 @@ class Earth(o.Base):
         )
         self._shaders.textures.activate()
 
-        self._vao.bind()
-        GL.glCullFace(GL.GL_FRONT)
-        GL.glDrawElements(
-            GL.GL_TRIANGLES,
-            len(self._plot_prop._ids),
-            GL.GL_UNSIGNED_INT,
-            None,
-        )
-        GL.glCullFace(GL.GL_BACK)
-        GL.glDrawElements(
-            GL.GL_TRIANGLES,
-            len(self._plot_prop._ids),
-            GL.GL_UNSIGNED_INT,
-            None,
-        )
-
-        self._vao.release()
+        with self._vao.activate():
+            GL.glCullFace(GL.GL_FRONT)
+            GL.glDrawElements(
+                GL.GL_TRIANGLES,
+                len(self._plot_prop._ids),
+                GL.GL_UNSIGNED_INT,
+                None,
+            )
+            GL.glCullFace(GL.GL_BACK)
+            GL.glDrawElements(
+                GL.GL_TRIANGLES,
+                len(self._plot_prop._ids),
+                GL.GL_UNSIGNED_INT,
+                None,
+            )
 
         self._shaders.textures.release()
         self._shaders.release()

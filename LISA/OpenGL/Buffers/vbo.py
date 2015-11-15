@@ -4,6 +4,7 @@
 from OpenGL import GL
 
 from .Buffer import Buffer
+from LISA.tools.metaclasses import SingletonManager
 
 
 __all__ = [
@@ -37,12 +38,11 @@ STREAM_READ = GL.GL_STREAM_READ
 STREAM_COPY = GL.GL_STREAM_COPY
 
 
-class VBO(Buffer):
+class VBO(Buffer, metaclass=SingletonManager):
     """
     A class to manage the creation and manipulation of buffer in OpenGL.
     """
-
-    def __init__(self, btype, usage=STATIC_DRAW):
+    def __init__(self, name, btype, usage=STATIC_DRAW):
         self.btype = btype
         self.usage = usage
 

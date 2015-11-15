@@ -4,16 +4,19 @@
 from OpenGL import GL
 
 from .Buffer import Buffer
-
+from LISA.tools.metaclasses import SingletonManager
 
 __all__ = [
     "VAO"
 ]
 
-class VAO(Buffer):
+
+class VAO(Buffer, metaclass=SingletonManager):
     """
     A class to manage vertex attribute object in OpenGL.
     """
+    def __init__(self, name):
+        self.name = name
 
     def create(self):
         """
@@ -27,7 +30,7 @@ class VAO(Buffer):
             raise ValueError("The Vertex Array can't be created!")
 
     def delete(self):
-        GL.glDeleteVertexArrays(1, [ self._id ])
+        GL.glDeleteVertexArrays(1, [self._id])
 
     def bind(self):
         GL.glBindVertexArray(self._id)

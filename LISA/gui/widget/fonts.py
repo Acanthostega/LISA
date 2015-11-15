@@ -19,7 +19,6 @@ class Text(Widget):
         color=[255, 255, 255],
         bg_color=[0, 0, 0],
     ):
-
         # init parent
         super(Text, self).__init__()
 
@@ -34,6 +33,15 @@ class Text(Widget):
 
         # init the texture
         self._texture = None
+
+        # set shaders
+        self._shaders += t.shader_path("text/text.vsh")
+        self._shaders += t.shader_path("text/text.fsh")
+
+        # create buffers
+        self._vertices = VBO("Widget square", VERTEX_BUFFER)
+        self._index = VBO("Widget square indexes", INDEX_BUFFER)
+        self._vao = VAO("Fonts")
 
     def set_manager(self):
         self._manager = FM(
@@ -94,6 +102,7 @@ class Text(Widget):
         self.minHeight = self._surface.h
         # self.height = self._surface.h
         self._texture = Texture.fromSDLSurface(self._surface)
+        self._texture.create()
         self._texture.parameters = {
             "TEXTURE_MIN_FILTER": "LINEAR",
             "TEXTURE_MAG_FILTER": "LINEAR",
@@ -109,53 +118,38 @@ class Text(Widget):
         # keep a trace of the figure
         self.text = self.text
 
-        # set shaders
-        self._shaders += t.shader_path("text/text.vsh")
-        self._shaders += t.shader_path("text/text.fsh")
-
-        # create buffers
-        self._vertices = VBO(VERTEX_BUFFER)
-        self._index = VBO(INDEX_BUFFER)
-        self._vao = VAO()
-
         self._vertices.create()
         self._index.create()
         self._vao.create()
 
         # allocate buffers
-        self._vertices.bind()
-        self._vertices.allocate(
-            self._mesh,
-            len(self._mesh) * 4
-        )
-        self._vertices.release()
+        with self._vertices.activate():
+            self._vertices.allocate(
+                self._mesh,
+                len(self._mesh) * 4
+            )
 
         # window
-        self._index.bind()
-        self._index.allocate(
-            self._indices,
-            len(self._indices) * 4
-        )
-        self._index.release()
+        with self._index.activate():
+            self._index.allocate(
+                self._indices,
+                len(self._indices) * 4
+            )
 
         self._shaders.build()
         self._shaders.bindAttribLocation("window")
         self._shaders.link()
 
-        self._vao.bind()
-
-        self._vertices.bind()
-        self._shaders.enableAttributeArray("window")
-        self._shaders.setAttributeBuffer(
-            "window",
-            self._mesh,
-        )
-        self._index.bind()
-
-        self._vao.release()
+        with self._vao.activate():
+            self._vertices.bind()
+            self._shaders.enableAttributeArray("window")
+            self._shaders.setAttributeBuffer(
+                "window",
+                self._mesh,
+            )
+            self._index.bind()
 
     def paintEvent(self, event):
-
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
         GL.glEnable(GL.GL_BLEND)
@@ -164,7 +158,7 @@ class Text(Widget):
 
         self._shaders.setUniformValue(
             "modelview",
-            self.world._widget_projection * self._model
+            self.world.widget_camera.projection * self._model
         )
 
         self._shaders.setUniformValue(
@@ -182,15 +176,14 @@ class Text(Widget):
         )
         self._shaders.textures.activate()
 
-        self._vao.bind()
-        GL.glDrawElements(
-            GL.GL_TRIANGLES,
-            self._npoints,
-            GL.GL_UNSIGNED_INT,
-            None
-        )
+        with self._vao.activate():
+            GL.glDrawElements(
+                GL.GL_TRIANGLES,
+                self._npoints,
+                GL.GL_UNSIGNED_INT,
+                None
+            )
 
-        self._vao.release()
         self._shaders.textures.release()
         self._shaders.release()
 

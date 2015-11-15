@@ -18,9 +18,7 @@ from LISA.gui.widget import Spinner
 
 
 class Rippler(o.Base):
-
     def __init__(self, *args, **kwargs):
-
         npoints = 30
         X = np.linspace(-1, 1, npoints).astype(np.float32)
         Y = np.linspace(-1, 1, npoints).astype(np.float32)
@@ -35,48 +33,43 @@ class Rippler(o.Base):
 
         self._time = datetime.datetime.now()
 
-    def createShaders(self, world):
-
         # create buffers
-        self._vertices = VBO(VERTEX_BUFFER)
-        self._index = VBO(INDEX_BUFFER)
-        self._vao = VAO()
+        self._vertices = VBO("Rippler vertices", VERTEX_BUFFER)
+        self._index = VBO("Rippler indexes", INDEX_BUFFER)
+        self._vao = VAO("Rippler")
 
+    def createShaders(self, world):
         self._vertices.create()
         self._index.create()
         self._vao.create()
 
         # allocate buffers
-        self._vertices.bind()
-        self._vertices.allocate(
-            self._data,
-            len(self._data) * 4
-        )
-        self._vertices.release()
-        self._index.bind()
-        self._index.allocate(
-            self._plot_prop._ids,
-            len(self._plot_prop._ids) * 4
-        )
-        self._index.release()
+        with self._vertices.activate():
+            self._vertices.allocate(
+                self._data,
+                len(self._data) * 4
+            )
+
+        with self._index.activate():
+            self._index.allocate(
+                self._plot_prop._ids,
+                len(self._plot_prop._ids) * 4
+            )
 
         self._shaders.build()
         self._shaders.bindAttribLocation("position")
 
         self._shaders.link()
 
-        self._vao.bind()
+        with self._vao.activate():
+            self._index.bind()
+            self._vertices.bind()
 
-        self._index.bind()
-        self._vertices.bind()
-
-        self._shaders.enableAttributeArray("position")
-        self._shaders.setAttributeBuffer(
-            "position",
-            self._data,
-        )
-
-        self._vao.release()
+            self._shaders.enableAttributeArray("position")
+            self._shaders.setAttributeBuffer(
+                "position",
+                self._data,
+            )
 
     def createWidget(self):
         self._widget = Application(layout="horizontal")
@@ -129,33 +122,29 @@ class Rippler(o.Base):
         print("clicked")
 
     def paintEvent(self, event):
-
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
 
         self._shaders.bind()
 
         self._shaders.setUniformValue(
             "projection",
-            event.world._projection
+            event.world.camera.projection
         )
         self._shaders.setUniformValue(
             "modelview",
-            event.world._view * self._model
+            event.world.camera.view * self._model
         )
         dt = datetime.datetime.now() - self._time
         second = float((dt.seconds * 1000000 + dt.microseconds) * 0.000006)
         self._shaders.setUniformValue("time", Vector(second, dtype=np.float32))
 
-        self._vao.bind()
-
-        GL.glDrawElements(
-            GL.GL_TRIANGLES,
-            len(self._plot_prop._ids),
-            GL.GL_UNSIGNED_INT,
-            None,
-        )
-
-        self._vao.release()
+        with self._vao.activate():
+            GL.glDrawElements(
+                GL.GL_TRIANGLES,
+                len(self._plot_prop._ids),
+                GL.GL_UNSIGNED_INT,
+                None,
+            )
 
         self._shaders.release()
 

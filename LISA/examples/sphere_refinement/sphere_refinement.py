@@ -17,7 +17,6 @@ from LISA.Matrice import Vector
 
 
 class SphereRefinement(o.Base):
-
     def __init__(self, *args, **kwargs):
         super(SphereRefinement, self).__init__(np.asarray([]))
 
@@ -33,6 +32,11 @@ class SphereRefinement(o.Base):
         self._shaders += t.shader_path("sphere/sphere.vsh")
         self._shaders += t.shader_path("sphere/sphere.fsh")
 
+        # create buffers
+        self._vertices = VBO("Sphere vertices", VERTEX_BUFFER)
+        self._index = VBO("Sphere indexes", INDEX_BUFFER)
+        self._vao = VAO("Sphere")
+
     def _createSphere(self, camera=[0, 0, 1]):
         # create the mesh
         self.sphere = IcoSphere([0, 0, 0], camera)
@@ -47,47 +51,37 @@ class SphereRefinement(o.Base):
         ).flatten()
 
     def createShaders(self, world):
-
-        # create buffers
-        self._vertices = VBO(VERTEX_BUFFER)
-        self._index = VBO(INDEX_BUFFER)
-        self._vao = VAO()
-
         self._vertices.create()
         self._index.create()
         self._vao.create()
 
         # allocate buffers
-        self._vertices.bind()
-        self._vertices.allocate(
-            self._data,
-            len(self._data) * 4
-        )
-        self._vertices.release()
-        self._index.bind()
-        self._index.allocate(
-            self._indices,
-            len(self._indices) * 4
-        )
-        self._index.release()
+        with self._vertices.activate():
+            self._vertices.allocate(
+                self._data,
+                len(self._data) * 4
+            )
+
+        with self._index.activate():
+            self._index.allocate(
+                self._indices,
+                len(self._indices) * 4
+            )
 
         self._shaders.build()
         self._shaders.bindAttribLocation("position")
 
         self._shaders.link()
 
-        self._vao.bind()
+        with self._vao.activate():
+            self._index.bind()
+            self._vertices.bind()
 
-        self._index.bind()
-        self._vertices.bind()
-
-        self._shaders.enableAttributeArray("position")
-        self._shaders.setAttributeBuffer(
-            "position",
-            self._data,
-        )
-
-        self._vao.release()
+            self._shaders.enableAttributeArray("position")
+            self._shaders.setAttributeBuffer(
+                "position",
+                self._data,
+            )
 
     def createWidget(self):
         self._widget = Application(layout="vertical")
@@ -139,22 +133,21 @@ class SphereRefinement(o.Base):
         self.createShaders(None)
 
     def paintEvent(self, event):
-
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
         GL.glEnable(GL.GL_CULL_FACE)
 
-        self.camera = np.dot(event.world.rotate[:3, :3].T, event.world.camera)
+        self.camera = event.world.camera.position
         self._changeRefinement()
 
         self._shaders.bind()
 
         self._shaders.setUniformValue(
             "projection",
-            event.world._projection,
+            event.world.camera.projection,
         )
         self._shaders.setUniformValue(
             "view",
-            event.world._view,
+            event.world.camera.view,
         )
         self._shaders.setUniformValue(
             "model",
@@ -162,11 +155,7 @@ class SphereRefinement(o.Base):
         )
         self._shaders.setUniformValue(
             "camera",
-            event.world._camera,
-        )
-        self._shaders.setUniformValue(
-            "rotate",
-            event.world._rotate,
+            event.world.camera.position,
         )
         self._shaders.setUniformValue(
             "light.position",
@@ -193,17 +182,15 @@ class SphereRefinement(o.Base):
             self.specularColor,
         )
 
-        self._vao.bind()
+        with self._vao.activate():
 
-        GL.glCullFace(GL.GL_BACK)
-        GL.glDrawElements(
-            GL.GL_TRIANGLES,
-            len(self._indices),
-            GL.GL_UNSIGNED_INT,
-            None,
-        )
-
-        self._vao.release()
+            GL.glCullFace(GL.GL_BACK)
+            GL.glDrawElements(
+                GL.GL_TRIANGLES,
+                len(self._indices),
+                GL.GL_UNSIGNED_INT,
+                None,
+            )
 
         self._shaders.release()
 

@@ -44,6 +44,16 @@ class HeightMap(o.Base):
         self._shaders += t.shader_path("heightmap/heightmap.vsh")
         self._shaders += t.shader_path("heightmap/heightmap.fsh")
 
+        # create buffers
+        self._vertices = VBO("Heightmap vertices", VERTEX_BUFFER)
+        self._index = VBO("Heightmap indexes", INDEX_BUFFER)
+        self._vao = VAO("Heightmap")
+
+        # texture of the heightmap
+        self._texture = Texture.fromImage(
+            t.texture_path("heightmap/two.png"),
+        )
+
     def createWidget(self):
         self._widget = Application(layout="vertical")
         self._widget.title.text = "Sphere mesh"
@@ -87,58 +97,48 @@ class HeightMap(o.Base):
         return self._widget
 
     def createShaders(self, world):
-        # create buffers
-        self._vertices = VBO(VERTEX_BUFFER)
-        self._index = VBO(INDEX_BUFFER)
-        self._vao = VAO()
-
         self._vertices.create()
         self._index.create()
         self._vao.create()
 
         # allocate buffers
-        self._vertices.bind()
-        self._vertices.allocate(
-            self._data,
-            len(self._data) * 4
-        )
-        self._vertices.release()
-        self._index.bind()
-        self._index.allocate(
-            self._plot_prop._ids,
-            len(self._plot_prop._ids) * 4
-        )
-        self._index.release()
+        with self._vertices.activate():
+            self._vertices.allocate(
+                self._data,
+                len(self._data) * 4
+            )
+        with self._index.activate():
+            self._index.allocate(
+                self._plot_prop._ids,
+                len(self._plot_prop._ids) * 4
+            )
 
-        texture = Texture.fromImage(
-            t.texture_path("heightmap/two.png"),
-        )
-        texture.parameters = {
+        # create and load textures
+        self._texture.create()
+        self._texture.parameters = {
             "TEXTURE_MIN_FILTER": "LINEAR",
             "TEXTURE_MAG_FILTER": "LINEAR",
             "TEXTURE_WRAP_S": "CLAMP_TO_EDGE",
             "TEXTURE_WRAP_T": "CLAMP_TO_EDGE",
         }
-        texture.load()
-        self._shaders.textures << texture
+        self._texture.load()
+
+        self._shaders.textures << self._texture
         self._shaders.build()
         self._shaders.bindAttribLocation("position")
 
         self._shaders.link()
 
         # Initialization of the VAO
-        self._vao.bind()
+        with self._vao.activate():
+            self._vertices.bind()
+            self._shaders.enableAttributeArray("position")
+            self._shaders.setAttributeBuffer(
+                "position",
+                self._data,
+            )
 
-        self._vertices.bind()
-        self._shaders.enableAttributeArray("position")
-        self._shaders.setAttributeBuffer(
-            "position",
-            self._data,
-        )
-
-        self._index.bind()
-
-        self._vao.release()
+            self._index.bind()
 
     def paintEvent(self, event):
 
@@ -149,11 +149,11 @@ class HeightMap(o.Base):
 
         self._shaders.setUniformValue(
             "projection",
-            self.world._projection,
+            event.world.camera.projection,
         )
         self._shaders.setUniformValue(
             "view",
-            self.world._view,
+            event.world.camera.view,
         )
         self._shaders.setUniformValue(
             "model",
@@ -161,11 +161,7 @@ class HeightMap(o.Base):
         )
         self._shaders.setUniformValue(
             "camera",
-            self.world._camera,
-        )
-        self._shaders.setUniformValue(
-            "rotate",
-            self.world._rotate,
+            event.world.camera.position,
         )
         self._shaders.setUniformValue(
             "light.position",
@@ -198,16 +194,14 @@ class HeightMap(o.Base):
         )
         self._shaders.textures.activate()
 
-        self._vao.bind()
+        with self._vao.activate():
+            GL.glDrawElements(
+                GL.GL_TRIANGLES,
+                len(self._plot_prop._ids),
+                GL.GL_UNSIGNED_INT,
+                None,
+            )
 
-        GL.glDrawElements(
-            GL.GL_TRIANGLES,
-            len(self._plot_prop._ids),
-            GL.GL_UNSIGNED_INT,
-            None,
-        )
-
-        self._vao.release()
         self._shaders.textures.release()
         self._shaders.release()
 

@@ -8,6 +8,10 @@ import LISA.Matrice as m
 from OpenGL import GL
 from LISA.tools.metaclasses import SingletonManager
 from LISA.tools.manager import Manager
+from LISA.OpenGL import Texture
+from LISA.OpenGL import VBO
+from LISA.OpenGL import VAO
+from LISA.OpenGL import FBO
 
 
 __all__ = ["SDLWindow"]
@@ -94,9 +98,7 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
         self._x = 0.
         self._y = 30.0
 
-        self._widget = []
-
-        self._screensize = size
+        self.screensize = size
 
         self._mouseHandler = None
 
@@ -112,28 +114,6 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
     def makeCurrent(self):
         logger.debug("Make {0} context current".format(self))
         s.SDL_GL_MakeCurrent(self._win, self._context)
-
-    def paintEvent(self, event):
-        logger.debug("Drawing {0}".format(self))
-        GL.glMatrixMode(GL.GL_PROJECTION | GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
-        GL.glOrtho(-400, 400, 300, -300, 0, 1)
-        GL.glClearColor(0, 0, 0, 1)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-        GL.glRotatef(10.0, 0.0, 0.0, 1.0)
-        GL.glBegin(GL.GL_TRIANGLES)
-        GL.glColor3f(1.0, 0.0, 0.0)
-        GL.glVertex2f(self._x, self._y + 90.0)
-        GL.glColor3f(0.0, 1.0, 0.0)
-        GL.glVertex2f(self._x + 90.0, self._y - 90.0)
-        GL.glColor3f(0.0, 0.0, 1.0)
-        GL.glVertex2f(self._x - 90.0, self._y - 90.0)
-        GL.glEnd()
-
-        self._y += 50
-        self._y %= 10
-
-        self.swap()
 
     def swap(self):
         logger.debug("Swapping {0}".format(self))
@@ -175,7 +155,7 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
         recursively to the parent until a widget accept it.
         """
         # get the widget accepting the event
-        widget = self._acceptMouse(self, self._widget, event)
+        widget = self._acceptMouse(self, self.widgets, event)
 
         # check it is the window itself
         if widget is self:
@@ -210,7 +190,7 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
 
     def keyReleaseEvent(self, event):
         # loop over children widgets
-        for widget in self._widget:
+        for widget in self.widgets:
             # call the widget to see if he process the event
             widget.keyReleaseEvent(event)
             if event.accepted:
@@ -218,7 +198,7 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
 
     def keyPressEvent(self, event):
         # loop over children widgets
-        for widget in self._widget:
+        for widget in self.widgets:
             # call the widget to see if he process the event
             widget.keyPressEvent(event)
             if event.accepted:
@@ -226,7 +206,7 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
 
     def wheelEvent(self, event):
         # loop over children widgets
-        for widget in self._widget:
+        for widget in self.widgets:
             # call the widget to see if he process the event
             widget.wheelEvent(event)
             if event.accepted:
@@ -282,7 +262,11 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
 
     @property
     def screenSize(self):
-        return self._screensize
+        return self._screenSize
+
+    @screenSize.setter
+    def screenSize(self, screenSize):
+        self._screenSize = screenSize
 
     @property
     def id(self):

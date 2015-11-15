@@ -3,3 +3,4 @@
 
 from .Matrice import *
 from .Vector import *
+from .scalar import *
