@@ -13,6 +13,7 @@ from LISA.OpenGL import VAO, VBO, INDEX_BUFFER, VERTEX_BUFFER, Texture, FBO
 from LISA.gui.widget import Application
 from LISA.gui.widget import HorizontalSlider
 from LISA.gui.widget import Text
+from LISA.gui.widget import GridLayout
 from LISA.gui.widget.image import Image
 from LISA.Matrice import Vector
 
@@ -195,7 +196,17 @@ class Earth(o.Base):
         self.image2 = Image(fbo=self._fbo)
         self.image2.minWidth = 100
         self.image2.minHeight = 100
-        self._widget.addWidget(self.image2)
+        self.image3 = Image(t.texture_path("heightmap/one.png"))
+        self.image3.minWidth = 100
+        self.image3.minHeight = 100
+        #  self._widget.addWidget(self.image2)
+        self.gridlayout = GridLayout()
+        self.gridlayout.size_hint = 1
+        self.gridlayout.addWidget(self.image, 2, 3, 0)
+        self.gridlayout.addWidget(self.image2, 2, 3, 3)
+        self.gridlayout.addWidget(self.image3, 1, 3, 2)
+
+        self._widget.addWidget(self.gridlayout)
 
         # connect the slider to the rotation of the earth
         self.rotation_slider.changedSlider.connect(self._updateModel)

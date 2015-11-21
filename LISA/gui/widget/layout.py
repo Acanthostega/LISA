@@ -1,10 +1,169 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import collections
+
 from .widget import Widget
 
+__all__ = ["VerticalLayout", "HorizontalLayout", "GridLayout"]
 
-__all__ = ["VerticalLayout", "HorizontalLayout"]
+
+class GridLayout(Widget):
+    def __init__(self, *args, **kwargs):
+        super(GridLayout, self).__init__(*args, **kwargs)
+        self._resizing = False
+
+    def addWidget(self, widget, nx, ny, index):
+        super(GridLayout, self).addWidget(widget)
+
+        # add some informations to the widgets
+        widget.nx = nx
+        widget.ny = ny
+        widget.index = index
+        self._recompute()
+
+    def _recompute(self):
+        # min width and height
+        self.minWidth = self.minWidth
+        self.minHeight = self.minHeight
+
+        width = self.width - self.padding_x.sum()
+        height = self.height - self.padding_y.sum()
+        for widget in self._children:
+            self._widget_position(widget, width, height)
+
+    def _widget_position(self, widget, width, height):
+        wwidth = (width / widget.nx)
+        wheight = (height / widget.ny)
+        nx = widget.index % widget.nx
+        ny = widget.index // widget.nx
+        widget.height = wheight
+        widget.width = wwidth
+        widget.x = (
+            self.x + self.padding_left + nx * wwidth + widget.margin_left
+        )
+        widget.y = (
+            self.y + self.padding_top + ny * wheight + widget.margin_top
+        )
+
+    @property
+    def width(self):
+        return super(GridLayout, self).width
+
+    @width.setter
+    def width(self, width):
+        self._size[0] = width
+        if self._size[0] < self.minWidth:
+            self._size[0] = self.minWidth
+        if self._resizing:
+            return
+        self._resizing = True
+        self._recompute()
+        self._resizing = False
+
+    @property
+    def height(self):
+        return super(GridLayout, self).height
+
+    @height.setter
+    def height(self, height):
+        self._size[1] = height
+        if self._size[1] < self.minHeight:
+            self._size[1] = self.minHeight
+        if self._resizing:
+            return
+        self._resizing = True
+        self._recompute()
+        self._resizing = False
+
+    @property
+    def x(self):
+        return super(GridLayout, self).x
+
+    @x.setter
+    def x(self, value):
+        super(GridLayout, self.__class__).x.fset(self, value)
+        if self._resizing:
+            return
+        self._resizing = True
+        self._recompute()
+        self._resizing = False
+
+    @property
+    def y(self):
+        return super(GridLayout, self).y
+
+    @y.setter
+    def y(self, value):
+        super(GridLayout, self.__class__).y.fset(self, value)
+        if self._resizing:
+            return
+        self._resizing = True
+        self._recompute()
+        self._resizing = False
+
+    @property
+    def minWidth(self):
+        return self._minWidth
+
+    @minWidth.setter
+    def minWidth(self, minWidth):
+        # container for minWidth
+        container = collections.defaultdict(float)
+
+        # compute the minwidth of all widgets in all lines
+        for widget in self._children:
+            # compute the line position of the widget
+            position = widget.index // widget.nx
+            container[position] += widget.minWidth + widget.margin_x.sum()
+
+        # get the maximal minimal size
+        mintmp = max(minWidth, *list(container.values()))
+        self._minWidth = mintmp
+        #  if mintmp >= minWidth:
+            #  self._minWidth = mintmp
+        #  else:
+            #  self._minWidth = minWidth
+
+        # call parent
+        if self.parent is not None:
+            self.parent.minWidth = float(self.minWidth + self.margin_x.sum())
+
+        # update width if necessary
+        if self.width < self._minWidth:
+            self.width = self._minWidth
+
+    @property
+    def minHeight(self):
+        return self._minHeight
+
+    @minHeight.setter
+    def minHeight(self, minHeight):
+        # container for minWidth
+        container = collections.defaultdict(float)
+
+        # compute the minwidth of all widgets in all lines
+        for widget in self._children:
+            # compute the line position of the widget
+            position = widget.index % widget.nx
+            container[position] += widget.minHeight + widget.margin_y.sum()
+
+        # get the maximal minimal size
+        mintmp = max(minHeight, *list(container.values()))
+        self._minHeight = mintmp
+        #  mintmp = max(*list(container.values()))
+        #  if mintmp >= minHeight:
+            #  self._minHeight = mintmp
+        #  else:
+            #  self._minHeight = minHeight
+
+        # call parent
+        if self.parent is not None:
+            self.parent.minHeight = float(self.minHeight + self.margin_y.sum())
+
+        # update height if necessary
+        if self.height < self._minHeight:
+            self.height = self._minHeight
 
 
 class BaseLayout(Widget):

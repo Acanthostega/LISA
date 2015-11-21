@@ -152,8 +152,8 @@ class Widget(object):
         self._size[0] = width
         if self._size[0] <= self.minWidth:
             self._size[0] = self.minWidth
-        if self.parent is not None:
-            self.parent.width = self._size[0]
+        #  if self.parent is not None:
+            #  self.parent.width = self._size[0]
 
     @property
     def height(self):
@@ -164,8 +164,8 @@ class Widget(object):
         self._size[1] = height
         if self._size[1] < self.minHeight:
             self._size[1] = self.minHeight
-        if self.parent is not None:
-            self.parent.height = self._size[1]
+        #  if self.parent is not None:
+            #  self.parent.height = self._size[1]
 
     @property
     def x(self):

@@ -103,6 +103,7 @@ class Application(VerticalLayout):
         self._mousePressBorders = False
 
     def mouseMoveEvent(self, event):
+        print(self.content.width)
         # call the parent
         super(Application, self).mouseMoveEvent(event)
         if event.accepted:
