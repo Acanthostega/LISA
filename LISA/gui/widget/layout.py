@@ -109,21 +109,29 @@ class GridLayout(Widget):
     @minWidth.setter
     def minWidth(self, minWidth):
         # container for minWidth
-        container = collections.defaultdict(float)
+        container = collections.defaultdict(
+            lambda: collections.defaultdict(float)
+        )
 
-        # compute the minwidth of all widgets in all lines
+        # compute the minwidth of all widgets in all columns for all lines
         for widget in self._children:
+            # compute the colnum
+            colnum = widget.index % widget.nx
+
             # compute the line position of the widget
-            position = widget.index // widget.nx
-            container[position] += widget.minWidth + widget.margin_x.sum()
+            minimal = widget.minWidth + widget.margin_x.sum()
+            container[widget.nx][colnum] = max(
+                container[widget.nx][colnum],
+                minimal,
+            )
+
+        # now compute the minimal size for all columns
+        for key, value in container.items():
+            container[key] = sum(value.values())
 
         # get the maximal minimal size
         mintmp = max(minWidth, *list(container.values()))
         self._minWidth = mintmp
-        #  if mintmp >= minWidth:
-            #  self._minWidth = mintmp
-        #  else:
-            #  self._minWidth = minWidth
 
         # call parent
         if self.parent is not None:
@@ -140,22 +148,29 @@ class GridLayout(Widget):
     @minHeight.setter
     def minHeight(self, minHeight):
         # container for minWidth
-        container = collections.defaultdict(float)
+        container = collections.defaultdict(
+            lambda: collections.defaultdict(float)
+        )
 
-        # compute the minwidth of all widgets in all lines
+        # compute the minwidth of all widgets in all columns for all lines
         for widget in self._children:
+            # compute the row number
+            rownum = widget.index // widget.nx
+
             # compute the line position of the widget
-            position = widget.index % widget.nx
-            container[position] += widget.minHeight + widget.margin_y.sum()
+            minimal = widget.minHeight + widget.margin_y.sum()
+            container[widget.ny][rownum] = max(
+                container[widget.ny][rownum],
+                minimal,
+            )
+
+        # now compute the minimal size for all columns
+        for key, value in container.items():
+            container[key] = sum(value.values())
 
         # get the maximal minimal size
         mintmp = max(minHeight, *list(container.values()))
         self._minHeight = mintmp
-        #  mintmp = max(*list(container.values()))
-        #  if mintmp >= minHeight:
-            #  self._minHeight = mintmp
-        #  else:
-            #  self._minHeight = minHeight
 
         # call parent
         if self.parent is not None:

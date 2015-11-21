@@ -202,6 +202,8 @@ class Earth(o.Base):
         #  self._widget.addWidget(self.image2)
         self.gridlayout = GridLayout()
         self.gridlayout.size_hint = 1
+        self.gridlayout.margin = 0
+        self.gridlayout.padding = 0
         self.gridlayout.addWidget(self.image, 2, 3, 0)
         self.gridlayout.addWidget(self.image2, 2, 3, 3)
         self.gridlayout.addWidget(self.image3, 1, 3, 2)
