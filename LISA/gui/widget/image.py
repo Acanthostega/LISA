@@ -7,13 +7,17 @@ import LISA.Matrice as m
 from OpenGL import GL
 from LISA.OpenGL import VAO, VBO, INDEX_BUFFER, VERTEX_BUFFER, Texture
 from .widget import Widget
+from LISA.OpenGL import Shaders
 
 
 class Image(Widget):
-    def __init__(self, image=None, fbo=None):
+    def __init__(self, image=None, fbo=None, **kwargs):
         # init parent
         super(Image, self).__init__()
         self._is_fbo = False
+
+        # store arguments to the image
+        self._kwargs = kwargs
 
         # register the image name
         self._image = image
@@ -29,6 +33,9 @@ class Image(Widget):
         self.padding = 0
         self.margin = 0
 
+        # init shaders
+        self._shaders = Shaders()
+
         # set shaders
         self._shaders += t.shader_path("image/image.vsh")
         self._shaders += t.shader_path("image/image.fsh")
@@ -38,7 +45,7 @@ class Image(Widget):
         self._index = VBO("Widget square indexes", INDEX_BUFFER)
         self._vao = VAO("Image")
 
-    def createShaders(self, world):
+    def createShaders(self):
         self._vertices.create()
         self._index.create()
         self._vao.create()
@@ -82,7 +89,7 @@ class Image(Widget):
 
         self._shaders.setUniformValue(
             "modelview",
-            event.world.widget_camera.projection * self._model
+            event.world.camera.projection * self._model
         )
 
         self._shaders.setUniformValue(
@@ -116,9 +123,6 @@ class Image(Widget):
         self._shaders.textures.release()
         self._shaders.release()
 
-    def mouseEvent(self, event):
-        pass
-
     @property
     def image(self):
         return self._image
@@ -128,7 +132,7 @@ class Image(Widget):
         self._image = image
         if self._image is None:
             return
-        self._image_texture = Texture.fromImage(self._image)
+        self._image_texture = Texture.fromImage(self._image, **self._kwargs)
         self._image_texture.create()
         self._image_texture.parameters = {
             "TEXTURE_MIN_FILTER": "LINEAR",

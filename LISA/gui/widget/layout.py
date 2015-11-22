@@ -130,7 +130,10 @@ class GridLayout(Widget):
             container[key] = sum(value.values())
 
         # get the maximal minimal size
-        mintmp = max(minWidth, *list(container.values()))
+        values = list(container.values())
+        if len(values) == 0:
+            values = [0]
+        mintmp = max(minWidth, *values)
         self._minWidth = mintmp
 
         # call parent
@@ -169,7 +172,10 @@ class GridLayout(Widget):
             container[key] = sum(value.values())
 
         # get the maximal minimal size
-        mintmp = max(minHeight, *list(container.values()))
+        values = list(container.values())
+        if len(values) == 0:
+            values = [0]
+        mintmp = max(minHeight, *values)
         self._minHeight = mintmp
 
         # call parent
@@ -183,7 +189,6 @@ class GridLayout(Widget):
 
 class BaseLayout(Widget):
     def __init__(self, *args, **kwargs):
-
         super(BaseLayout, self).__init__(*args, **kwargs)
 
         # indicate if already resizing the widget
@@ -295,7 +300,6 @@ class BaseLayout(Widget):
 
     @y.setter
     def y(self, y):
-
         # store old position
         old = self._corner[1]
 

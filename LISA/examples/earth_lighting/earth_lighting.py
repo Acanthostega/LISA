@@ -20,7 +20,6 @@ from LISA.Matrice import Vector
 
 class Earth(o.Base):
     def __init__(self, *args, **kwargs):
-
         npoints = 800
         phi = np.linspace(0, 2. * np.pi, npoints).astype(np.float32)
         theta = np.linspace(
@@ -76,10 +75,10 @@ class Earth(o.Base):
         self._nvertices = VBO("Earth normals", VERTEX_BUFFER)
         self._nindex = VBO("Earth normal indexes", INDEX_BUFFER)
         self._vao = VAO("Earth")
-        self._fbo = FBO("Earth scene", 1600, 1600)
+        self._fbo = FBO(1600, 1600)
         self._texture = Texture.fromImage(t.texture_path("earth/earth.jpg"))
 
-    def createShaders(self, world):
+    def createShaders(self):
         self._vertices.create()
         self._index.create()
         self._nvertices.create()
@@ -188,12 +187,14 @@ class Earth(o.Base):
         self.image_text.text = "Image"
         self._widget.addWidget(self.image_text)
 
-        self.image = Image(t.texture_path("earth/earth2.png"))
+        self.image = Image(t.texture_path("earth/earth.jpg"), format="RGB")
+        #  self.image = Image("/home/manuel/Images/homer.png")
         self.image.minWidth = 100
         self.image.minHeight = 100
-        #  self._widget.addWidget(self.image)
 
-        self.image2 = Image(fbo=self._fbo)
+        #  self.image2 = Image(fbo=self._fbo)
+        self.image2 = Image(t.texture_path("earth/earth2.png"))
+        #  self.image2 = Image("/home/manuel/Images/homer.png", format="RGB")
         self.image2.minWidth = 100
         self.image2.minHeight = 100
         self.image3 = Image(t.texture_path("heightmap/one.png"))
@@ -244,13 +245,13 @@ class Earth(o.Base):
         self.model *= m.Quaternion(self.angle, m.Vector(0., 0., 1.))
 
         # render in the fbo
-        with self._fbo.activate():
+        #  with self._fbo.activate():
 
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-            screen = event.world.camera.screen
-            event.world.camera.screen = self._fbo.width, self._fbo.height
-            self._render(event)
-            event.world.camera.screen = screen
+            #  GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+            #  screen = event.world.camera.screen
+            #  event.world.camera.screen = self._fbo.width, self._fbo.height
+            #  self._render(event)
+            #  event.world.camera.screen = screen
 
         # render in the screen
         self._render(event)

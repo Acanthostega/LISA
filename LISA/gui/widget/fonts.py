@@ -9,6 +9,7 @@ from LISA.OpenGL import VAO, VBO, INDEX_BUFFER, VERTEX_BUFFER, Texture
 from sdl2.ext.color import Color
 from sdl2.ext import FontManager as FM
 from LISA.gui.utils.fonts import getDefaultFont
+from LISA.OpenGL import Shaders
 
 
 class Text(Widget):
@@ -33,6 +34,8 @@ class Text(Widget):
 
         # init the texture
         self._texture = None
+        # init shaders
+        self._shaders = Shaders()
 
         # set shaders
         self._shaders += t.shader_path("text/text.vsh")
@@ -112,9 +115,7 @@ class Text(Widget):
         self._texture.load()
         self._shaders.textures << self._texture
 
-    def createShaders(self, world):
-        self.world = world
-
+    def createShaders(self):
         # keep a trace of the figure
         self.text = self.text
 
@@ -158,7 +159,7 @@ class Text(Widget):
 
         self._shaders.setUniformValue(
             "modelview",
-            self.world.widget_camera.projection * self._model
+            event.world.camera.projection * self._model
         )
 
         self._shaders.setUniformValue(

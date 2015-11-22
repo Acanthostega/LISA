@@ -50,7 +50,7 @@ class SphereRefinement(o.Base):
             dtype="uint32"
         ).flatten()
 
-    def createShaders(self, world):
+    def createShaders(self):
         self._vertices.create()
         self._index.create()
         self._vao.create()
@@ -130,7 +130,7 @@ class SphereRefinement(o.Base):
         self._createSphere(self.camera)
 
         # recreate the shaders and buffers
-        self.createShaders(None)
+        self.createShaders()
 
     def paintEvent(self, event):
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)

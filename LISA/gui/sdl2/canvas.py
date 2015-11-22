@@ -1,13 +1,12 @@
 # -*- coding:Utf8 -*-
 
 import logging
-import LISA.Matrice as m
 
 from OpenGL.arrays import numpymodule
 from OpenGL import GL
 
 from LISA.gui.utils.cameras import TopCamera
-from LISA.gui.utils.cameras import Camera
+from LISA.gui.widget import GridLayout
 from .window import SDLWindow
 from .hook import EventLoop
 from .application_events import PaintEvent
@@ -34,16 +33,21 @@ class Canvas(SDLWindow):
 
         # init the window as usual
         super(Canvas, self).__init__(*args, **kwargs)
-
-        # set the top view camera
-        self.camera = Camera()
+        self.camera = TopCamera()
         self.camera.screen = self.screensize
-        self.widget_camera = TopCamera()
-        self.widget_camera.screen = self.screensize
+
+        # a gridlayout for containing the axes
+        self.grid = GridLayout()
+        self.grid.size_hint = 1
+        self.grid.margin = 0
+        self.grid.padding = 0
+        self.makeCurrent()
+        self.grid.createShaders()
 
     def addWidget(self, widget):
         if hasattr(widget, "paintEvent"):
-            widget.world = self
+            self.makeCurrent()
+            widget.createShaders()
             self.widgets.append(widget)
         else:
             logger.error(
@@ -59,15 +63,71 @@ class Canvas(SDLWindow):
 
     def resizeEvent(self, event):
         super(Canvas, self).resizeEvent(event)
+
+        # indicate new size to cameras
         self.camera.screen = event.size
-        self.widget_camera.screen = event.size
+
+        # set the new size to the grid for axes
+        self.grid.width = event.size[0]
+        self.grid.height = event.size[1]
+
+        # loop oiver axes to send resize event
+        #  for axe in self.axes:
+            #  size = event.size
+            #  event.size = axe._size
+            #  axe.resizeEvent(event)
+            #  event.size = size
+
+        # refresh the page
         self.update()
+
+    def mousePressEvent(self, event):
+        # first send event to widgets as usual
+        super(Canvas, self).mousePressEvent(event)
+
+        # dispatch it to axes
+        for axe in self.axes:
+            axe.mousePressEvent(event)
+            if event.accepted:
+                return
+
+    def mouseReleaseEvent(self, event):
+        # first send event to widgets as usual
+        super(Canvas, self).mouseReleaseEvent(event)
+
+        # dispatch it to axes
+        for axe in self.axes:
+            axe.mouseReleaseEvent(event)
+            if event.accepted:
+
+                return
+
+    def mouseMoveEvent(self, event):
+        # first send event to widgets as usual
+        super(Canvas, self).mouseMoveEvent(event)
+
+        # dispatch it to axes
+        for axe in self.axes:
+            axe.mouseMoveEvent(event)
+            if event.accepted:
+                return
+
+    def wheelEvent(self, event):
+        # first send event to widgets as usual
+        super(Canvas, self).wheelEvent(event)
+
+        # dispatch it to axes
+        for axe in self.axes:
+            axe.wheelEvent(event)
+            if event.accepted:
+                return
 
     def paintEvent(self, event):
         self.makeCurrent()
 
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
+        self.grid.paintEvent(event)
         for axe in self.axes:
             axe.paintEvent(event)
 
@@ -76,54 +136,6 @@ class Canvas(SDLWindow):
             widget.paintEvent(event)
 
         self.swap()
-
-    def mousePressEvent(self, event):
-        super(Canvas, self).mousePressEvent(event)
-        if event.accepted:
-            return
-        # say the mouse is pressed
-        self._mousePress = True
-
-    def mouseReleaseEvent(self, event):
-        super(Canvas, self).mouseReleaseEvent(event)
-        self._mousePress = False
-
-    def mouseMoveEvent(self, event):
-        super(Canvas, self).mouseMoveEvent(event)
-        if event.accepted:
-            return
-
-        if self._mousePress:
-            # compute the movement of the mouse
-            x, y = event.dx, event.dy
-
-            # if no movement, do nothing
-            if x == 0 and y == 0:
-                return
-
-            # create the rotation axis
-            rotationAxis = m.Vector(y, x, 0.0)
-
-            # make the angular speed to its norm
-            angularSpeed = rotationAxis.norm()
-
-            # move the camera
-            self.camera.rotate(rotationAxis, angularSpeed)
-
-            # refresh
-            self.update()
-
-    def wheelEvent(self, event):
-        super(Canvas, self).wheelEvent(event)
-
-        delta = event.dy
-
-        if delta < 0:
-            self.camera.zoom = 1.15
-        elif delta > 0:
-            self.camera.zoom = 0.87
-
-        self.update()
 
     def showEvent(self, event):
         self.update()

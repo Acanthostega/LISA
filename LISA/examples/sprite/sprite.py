@@ -46,7 +46,7 @@ class Sprites(o.Base):
         self._index = VBO("Sprites indexes", INDEX_BUFFER)
         self._vao = VAO("Sprites")
 
-    def createShaders(self, parent):
+    def createShaders(self):
         self._vertices.create()
         self._index.create()
         self._vao.create()

@@ -96,7 +96,7 @@ class HeightMap(o.Base):
 
         return self._widget
 
-    def createShaders(self, world):
+    def createShaders(self):
         self._vertices.create()
         self._index.create()
         self._vao.create()
@@ -141,7 +141,6 @@ class HeightMap(o.Base):
             self._index.bind()
 
     def paintEvent(self, event):
-
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         GL.glEnable(GL.GL_DEPTH_TEST)
 

@@ -149,6 +149,9 @@ class TopCamera(Camera):
         # init the camera as usual
         super(TopCamera, self).__init__()
 
+        # change z of the camera for distinction
+        self._position = m.Vector(0, 0, 1., dtype="float32")
+
         # projection matrix used for widget
         self.projection = Orthographic(shape=(4, 4), dtype="float32")
 

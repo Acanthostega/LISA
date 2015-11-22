@@ -60,7 +60,7 @@ class Earth(o.Base):
         self._vao = VAO("Earth")
         self.texture = Texture.fromImage(t.texture_path("earth/earth2.png"))
 
-    def createShaders(self, world):
+    def createShaders(self):
         self._vertices.create()
         self._index.create()
         self._vao.create()

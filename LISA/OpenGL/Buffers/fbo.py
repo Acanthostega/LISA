@@ -5,7 +5,6 @@ from OpenGL import GL
 
 from .Buffer import Buffer
 from ..Textures import Texture
-from LISA.tools.metaclasses import SingletonManager
 
 __all__ = [
     "FBO",
@@ -41,20 +40,18 @@ class RenderBuffer(Buffer):
         return self._id
 
 
-class FBO(Buffer, metaclass=SingletonManager):
+class FBO(Buffer):
     """
     The Frame Buffer object class.
     """
     def __init__(
         self,
-        name,
         width=480,
         height=192,
         textureFormat="RGBA",
         useStencil=False,
     ):
         self._id = 0
-        self.name = name
 
         self._width = width
         self._height = height
@@ -85,47 +82,44 @@ class FBO(Buffer, metaclass=SingletonManager):
 
         self._id = GL.glGenFramebuffers(1)
 
-        self.bind()
+        with self.activate():
+            self.loadColorBuffers(nbColorBuffer)
+            self.loadRenderBuffer(self._depthFormat)
+            for i, tex in enumerate(self._colorBuffers):
+                tex.activate()
+                GL.glFramebufferTexture2D(
+                    GL.GL_FRAMEBUFFER,
+                    getattr(GL, "GL_COLOR_ATTACHMENT" + str(i)),
+                    GL.GL_TEXTURE_2D,
+                    tex.id,
+                    0
+                )
+                tex.release()
 
-        self.loadColorBuffers(nbColorBuffer)
-        self.loadRenderBuffer(self._depthFormat)
-        for i, tex in enumerate(self._colorBuffers):
-            tex.activate()
-            GL.glFramebufferTexture2D(
-                GL.GL_FRAMEBUFFER,
-                getattr(GL, "GL_COLOR_ATTACHMENT" + str(i)),
-                GL.GL_TEXTURE_2D,
-                tex.id,
-                0
-            )
-            tex.release()
+            if not self._useStencil:
+                GL.glFramebufferRenderbuffer(
+                    GL.GL_FRAMEBUFFER,
+                    GL.GL_DEPTH_ATTACHMENT,
+                    GL.GL_RENDERBUFFER,
+                    self._renderBuffer.id
+                )
+            else:
+                GL.glFramebufferRenderbuffer(
+                    GL.GL_FRAMEBUFFER,
+                    GL.GL_DEPTH_STENCIL_ATTACHMENT,
+                    GL.GL_RENDERBUFFER,
+                    self._renderBuffer.id
+                )
 
-        if not self._useStencil:
-            GL.glFramebufferRenderbuffer(
-                GL.GL_FRAMEBUFFER,
-                GL.GL_DEPTH_ATTACHMENT,
-                GL.GL_RENDERBUFFER,
-                self._renderBuffer.id
-            )
-        else:
-            GL.glFramebufferRenderbuffer(
-                GL.GL_FRAMEBUFFER,
-                GL.GL_DEPTH_STENCIL_ATTACHMENT,
-                GL.GL_RENDERBUFFER,
-                self._renderBuffer.id
-            )
+            if (
+                GL.glCheckFramebufferStatus(GL.GL_FRAMEBUFFER) !=
+                GL.GL_FRAMEBUFFER_COMPLETE
+            ):
+                self.delete()
 
-        if (
-            GL.glCheckFramebufferStatus(GL.GL_FRAMEBUFFER) !=
-            GL.GL_FRAMEBUFFER_COMPLETE
-        ):
-            self.delete()
-
-            raise RuntimeError(
-                "Problem with framebuffer instance '%s': creation failed."
-            )
-
-        self.release()
+                raise RuntimeError(
+                    "Problem with framebuffer instance '%s': creation failed."
+                )
 
     def bind(self):
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self._id)

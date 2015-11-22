@@ -8,12 +8,11 @@ from scipy.misc import imread
 
 from LISA.Matrice import Vector
 from LISA.tools import DTYPE_TO_GL
-from LISA.tools.metaclasses import SingletonManager
 
 __all__ = ["Texture"]
 
 
-class Texture(metaclass=SingletonManager):
+class Texture(object):
     """
     A class representation of a texture.
     """
@@ -180,7 +179,7 @@ class Texture(metaclass=SingletonManager):
         GPU.
         """
         # remove from the manager
-        self.manager.delete(self)
+        #  self.manager.delete(self)
 
         # remove from the GPU
         GL.glDeleteTextures([self.id])

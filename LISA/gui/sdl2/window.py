@@ -159,7 +159,7 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
 
         # check it is the window itself
         if widget is self:
-            return self._mousePressEvent(event)
+            return
 
         # up in the tree while nobody accept the event, or we reach the root
         # (the window)

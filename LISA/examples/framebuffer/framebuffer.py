@@ -77,7 +77,7 @@ class HeightMapFBO(object):
         self._vertices = VBO("Heightmap FBO vertices", VERTEX_BUFFER)
         self._index = VBO("Heightmap FBO indexes", INDEX_BUFFER)
         self._vao = VAO("Heightmap FBO")
-        self._fbo = FBO("Heightmap FBO", self._w_fbo, self._h_fbo)
+        self._fbo = FBO(self._w_fbo, self._h_fbo)
         self._carre_vert = VBO("Square vertices", VERTEX_BUFFER)
         self._carre_idx = VBO("Square indexes", INDEX_BUFFER)
         self._carre_vao = VAO("Square")
@@ -129,7 +129,7 @@ class HeightMapFBO(object):
 
         return self._widget
 
-    def createShader(self, parent):
+    def createShader(self):
         self._shaders.build()
         self._shaders.bindAttribLocation("position")
 
@@ -139,7 +139,7 @@ class HeightMapFBO(object):
         self._carre_shader.bindAttribLocation("position")
         self._carre_shader.link()
 
-    def createBuffer(self, parent):
+    def createBuffer(self):
         self._vertices.create()
         self._index.create()
         self._vao.create()
@@ -179,7 +179,7 @@ class HeightMapFBO(object):
                 len(self._carre_index) * 4
             )
 
-    def createTexture(self, parent):
+    def createTexture(self):
         self.texture.parameters = {
             "TEXTURE_MIN_FILTER": "LINEAR",
             "TEXTURE_MAG_FILTER": "LINEAR",
@@ -191,10 +191,10 @@ class HeightMapFBO(object):
 
         self._carre_shader.textures << self._fbo.colorBuffers[0]
 
-    def createShaders(self, parent):
-        self.createBuffer(parent)
-        self.createShader(parent)
-        self.createTexture(parent)
+    def createShaders(self):
+        self.createBuffer()
+        self.createShader()
+        self.createTexture()
 
         # Initialization of the VAO
         with self._vao.activate():

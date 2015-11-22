@@ -63,6 +63,15 @@ class Widget(object):
         # set the default color
         self.bgcolor = 0.1, 0.1, 0.1, 0.7
 
+        # init some opengl objects
+        self._shaders += t.shader_path("widget/widget.vsh")
+        self._shaders += t.shader_path("widget/widget.fsh")
+
+        # create buffers
+        self._vertices = VBO("Widget square", VERTEX_BUFFER)
+        self._index = VBO("Widget square indexes", INDEX_BUFFER)
+        self._vao = VAO("Widget")
+
     def addWidget(self, widget):
         """
         Add a widget in the list of children and set correctly sizes
@@ -74,14 +83,6 @@ class Widget(object):
 
         # append the widget to children
         self._children.append(widget)
-
-    @property
-    def world(self):
-        return self._world
-
-    @world.setter
-    def world(self, world):
-        self._world = world
 
     @property
     def bgcolor(self):
@@ -319,53 +320,39 @@ class Widget(object):
     def margin_bottom(self, margin_bottom):
         self._margin[3] = margin_bottom
 
-    def createShaders(self, world):
-        self.world = world
-
-        self._shaders += t.shader_path("widget/widget.vsh")
-        self._shaders += t.shader_path("widget/widget.fsh")
-
-        # create buffers
-        self._vertices = VBO("Widget square", VERTEX_BUFFER)
-        self._index = VBO("Widget square indexes", INDEX_BUFFER)
-        self._vao = VAO("Widget")
-
+    def createShaders(self):
         self._vertices.create()
         self._index.create()
         self._vao.create()
 
         # allocate buffers
-        self._vertices.bind()
-        self._vertices.allocate(
-            self._mesh,
-            len(self._mesh) * 4
-        )
-        self._vertices.release()
-        self._index.bind()
-        self._index.allocate(
-            self._indices,
-            len(self._indices) * 4
-        )
-        self._index.release()
+        with self._vertices.activate():
+            self._vertices.allocate(
+                self._mesh,
+                len(self._mesh) * 4
+            )
+
+        with self._index.activate():
+            self._index.allocate(
+                self._indices,
+                len(self._indices) * 4
+            )
 
         self._shaders.build()
         self._shaders.bindAttribLocation("window")
         self._shaders.link()
 
-        self._vao.bind()
-
-        self._vertices.bind()
-        self._shaders.enableAttributeArray("window")
-        self._shaders.setAttributeBuffer(
-            "window",
-            self._mesh,
-        )
-        self._index.bind()
-
-        self._vao.release()
+        with self._vao.activate():
+            self._vertices.bind()
+            self._shaders.enableAttributeArray("window")
+            self._shaders.setAttributeBuffer(
+                "window",
+                self._mesh,
+            )
+            self._index.bind()
 
         for widget in self._children:
-            widget.createShaders(world)
+            widget.createShaders()
 
     def paintEvent(self, event):
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
@@ -376,7 +363,7 @@ class Widget(object):
 
         self._shaders.setUniformValue(
             "modelview",
-            self.world.widget_camera.projection * self._model
+            event.world.camera.projection * self._model
         )
 
         self._shaders.setUniformValue(
@@ -392,15 +379,14 @@ class Widget(object):
             self._bgcolor,
         )
 
-        self._vao.bind()
-        GL.glDrawElements(
-            GL.GL_TRIANGLES,
-            self._npoints,
-            GL.GL_UNSIGNED_INT,
-            None
-        )
+        with self._vao.activate():
+            GL.glDrawElements(
+                GL.GL_TRIANGLES,
+                self._npoints,
+                GL.GL_UNSIGNED_INT,
+                None
+            )
 
-        self._vao.release()
         self._shaders.release()
 
         for widget in self._children:

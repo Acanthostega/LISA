@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+import traceback
 import argparse
+import logging
 from LISA.gui.sdl2.Figure import Figure
 
 from LISA.examples.rippler import Rippler
@@ -10,6 +12,8 @@ from LISA.examples.earth_lighting import Earth as EarthLight
 from LISA.examples.sprite import Sprites
 from LISA.examples.sphere_refinement import SphereRefinement
 from LISA.examples.framebuffer import HeightMapFBO
+
+logger = logging.getLogger(__name__)
 
 # read arguments
 parser = argparse.ArgumentParser(
@@ -66,9 +70,21 @@ args = parser.parse_args()
 # create a figure
 fig = Figure()
 
+# create an axes
+#  axes = fig.add_axes(2, 2, 1)
+axes = fig.add_axes(2, 2, 2)
+#  axes = fig.add_axes(1, 1, 0)
+
 # loop over keys
 for key, value in args.__dict__.items():
     if value:
-        fig.axes = locals()[key]()
+        obj = locals()[key]()
+        axes.add(obj)
+        try:
+            widget = obj.createWidget()
+            fig.addWidget(widget)
+        except Exception as e:
+            trace = traceback.format_exc()
+            print("Problem creating widget\n{0}\n{1}".format(trace, e))
 
 input()
