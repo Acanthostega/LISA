@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import ctypes
 import sdl2 as s
 import logging
 import LISA.Matrice as m
 
-from OpenGL import GL
 from LISA.tools.metaclasses import SingletonManager
 from LISA.tools.manager import Manager
-from LISA.OpenGL import Texture
-from LISA.OpenGL import VBO
-from LISA.OpenGL import VAO
-from LISA.OpenGL import FBO
 
 
 __all__ = ["SDLWindow"]
@@ -72,6 +68,9 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
         size=m.Vector(800, 480),
         flags=s.SDL_WINDOW_SHOWN | s.SDL_WINDOW_OPENGL | s.SDL_WINDOW_RESIZABLE
     ):
+        # initialize the context to None for race condition
+        self._context = None
+
         # create the window with default size
         logger.debug("Create SDL window {0}".format(title))
         self._win = s.SDL_CreateWindow(
@@ -127,6 +126,10 @@ class SDLWindow(object, metaclass=SingletonManager, manager=WindowManager):
         # remove the window in the register of window to display in the
         # event loop
         SDLWindow.manager.delete(self)
+
+        # delete the created context
+        if self._context is not None:
+            s.SDL_GL_DeleteContext(ctypes.c_void_p(self._context))
 
         # destroy the window with SDL
         s.SDL_DestroyWindow(
