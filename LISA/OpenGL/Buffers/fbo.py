@@ -5,6 +5,7 @@ from OpenGL import GL
 
 from .Buffer import Buffer
 from ..Textures import Texture
+from PIL import Image
 
 __all__ = [
     "FBO",
@@ -194,6 +195,17 @@ class FBO(Buffer):
     @property
     def colorBuffers(self):
         return self._colorBuffers
+
+    def getTexture(self):
+        data = GL.glReadPixels(
+            0, 0,
+            self.width, self.height,
+            GL.GL_RGBA,
+            GL.GL_UNSIGNED_BYTE,
+        )
+        print(type(data))
+        obj = Image.frombytes("RGBA", (self._width, self._height), data)
+        obj.save("/tmp/image.png")
 
 
 # vim: set tw=79 :

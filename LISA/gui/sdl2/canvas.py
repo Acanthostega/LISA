@@ -38,6 +38,7 @@ class Canvas(SDLWindow):
 
         # a gridlayout for containing the axes
         self.grid = GridLayout()
+        #  self.grid = VerticalLayout()
         self.grid.size_hint = 1
         self.grid.margin = 0
         self.grid.padding = 0
@@ -72,11 +73,8 @@ class Canvas(SDLWindow):
         self.grid.height = event.size[1]
 
         # loop oiver axes to send resize event
-        #  for axe in self.axes:
-            #  size = event.size
-            #  event.size = axe._size
-            #  axe.resizeEvent(event)
-            #  event.size = size
+        for axe in self.axes:
+            axe.resizeEvent(event)
 
         # refresh the page
         self.update()
@@ -87,8 +85,8 @@ class Canvas(SDLWindow):
 
         # dispatch it to axes
         for axe in self.axes:
-            axe.mousePressEvent(event)
-            if event.accepted:
+            if axe.inside(event.x, event.y):
+                axe.mousePressEvent(event)
                 return
 
     def mouseReleaseEvent(self, event):
@@ -99,7 +97,6 @@ class Canvas(SDLWindow):
         for axe in self.axes:
             axe.mouseReleaseEvent(event)
             if event.accepted:
-
                 return
 
     def mouseMoveEvent(self, event):
@@ -127,7 +124,6 @@ class Canvas(SDLWindow):
 
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
-        self.grid.paintEvent(event)
         for axe in self.axes:
             axe.paintEvent(event)
 

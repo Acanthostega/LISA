@@ -71,8 +71,10 @@ args = parser.parse_args()
 fig = Figure()
 
 # create an axes
-#  axes = fig.add_axes(2, 2, 1)
+axes4 = fig.add_axes(2, 2, 0)
+axes1 = fig.add_axes(2, 2, 1)
 axes = fig.add_axes(2, 2, 2)
+axes2 = fig.add_axes(2, 2, 3)
 #  axes = fig.add_axes(1, 1, 0)
 
 # loop over keys
@@ -86,5 +88,9 @@ for key, value in args.__dict__.items():
         except Exception as e:
             trace = traceback.format_exc()
             print("Problem creating widget\n{0}\n{1}".format(trace, e))
+
+        axes2.add(HeightMap())
+        axes4.add(Earth())
+        axes1.add(SphereRefinement())
 
 input()

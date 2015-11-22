@@ -192,7 +192,7 @@ class Earth(o.Base):
         self.image.minWidth = 100
         self.image.minHeight = 100
 
-        #  self.image2 = Image(fbo=self._fbo)
+        #  self.image2 = Image(fbo=self.axes._fbo)
         self.image2 = Image(t.texture_path("earth/earth2.png"))
         #  self.image2 = Image("/home/manuel/Images/homer.png", format="RGB")
         self.image2.minWidth = 100

@@ -29,7 +29,6 @@ class Axes(Image):
 
         # init the window as usual
         super(Axes, self).__init__(fbo=self.fbo)
-        #  super(Axes, self).__init__(t.texture_path("heightmap/two.png"))
 
         # set the top view camera
         self.camera = Camera()
@@ -39,6 +38,7 @@ class Axes(Image):
     def add(self, axes):
         # make current
         self.canvas.makeCurrent()
+        axes.axes = self
 
         axes.createShaders()
 
@@ -59,6 +59,7 @@ class Axes(Image):
         # hook to force camera
         camera = event.world.camera
         event.world.camera = self.camera
+        self.camera.screen = self.camera.screen
 
         # render content of the axes into the fbo
         with self._fbo.activate():
@@ -67,6 +68,7 @@ class Axes(Image):
                 axe.paintEvent(event)
 
         # put agin the camera of the canvas
+        camera.screen = camera.screen
         event.world.camera = camera
 
         # render the axes in the fbp
