@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import numpy as np
-
 import LISA.tools as t
 import LISA.Matrice as m
 
@@ -20,6 +18,7 @@ class Base(object):
     def __init__(self, data, linetype=Point(), shaders=None):
         self.data = data
 
+        self._local = m.Identity()
         self._model = m.Identity()
 
         self._plot_prop = linetype
@@ -34,6 +33,11 @@ class Base(object):
             self._shaders += t.shader_path("basic.vsh")
             self._shaders += t.shader_path("basic.fsh")
         self._shaders.link()
+
+    def render(self, event, transform, dirty):
+        if dirty:
+            self.model = transform * self.local
+        self.paintEvent(event)
 
     def paintEvent(self, event):
         GL.glEnable(GL.GL_DEPTH_TEST)
@@ -70,9 +74,18 @@ class Base(object):
     @property
     def model(self):
         return self._model
+
     @model.setter
     def model(self, model):
         self._model = model
+
+    @property
+    def local(self):
+        return self._local
+
+    @local.setter
+    def local(self, local):
+        self._local = local
 
     @property
     def shaders(self):

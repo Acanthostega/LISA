@@ -7,6 +7,7 @@ import LISA.tools as t
 from LISA.gui.utils.cameras import Camera
 from LISA.OpenGL import FBO
 from .image import Image
+from .scene import Scene
 from OpenGL import GL
 
 
@@ -17,9 +18,6 @@ class Axes(Image):
     def __init__(self, canvas):
         # store reference to the canvas
         self.canvas = canvas
-
-        # Data class to plot:
-        self.axes = []
 
         # Some variables use to keep track of what we are doing with events:
         self._mousePress = False
@@ -32,17 +30,13 @@ class Axes(Image):
 
         # set the top view camera
         self.camera = Camera()
+
         #  self.camera.screen = self._size
         self.camera.screen = [self._fbo.width, self._fbo.height]
 
-    def add(self, axes):
-        # make current
-        self.canvas.makeCurrent()
-        axes.axes = self
-
-        axes.createShaders()
-
-        self.axes.append(axes)
+        # create a default scene
+        self.scene = Scene()
+        self.scene.canvas = canvas
 
     def update(self):
         """
@@ -64,14 +58,13 @@ class Axes(Image):
         # render content of the axes into the fbo
         with self._fbo.activate():
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-            for axe in self.axes:
-                axe.paintEvent(event)
+            self.scene.paintEvent(event)
 
         # put agin the camera of the canvas
         camera.screen = camera.screen
         event.world.camera = camera
 
-        # render the axes in the fbp
+        # render the axes in the fbo
         super(Axes, self).paintEvent(event)
 
     def mousePressEvent(self, event):
